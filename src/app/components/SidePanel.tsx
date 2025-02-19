@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import { sendFileToBackend } from '@/service/dataService';
 
 export default function SidePanel() {
   const router = useRouter();
@@ -22,10 +23,16 @@ export default function SidePanel() {
     }
   };
 
-  const handleUpload = () => {
-    if (file) {
-      // Implement file upload logic here
-      console.log('Uploading:', file.name);
+  const handleUpload = async () => {
+    try {
+      if (file) {
+        await sendFileToBackend(file);
+        alert("File saved!");
+      } else {
+        alert("Please choose a file first!");
+      }
+    } catch (e) {
+      alert(e);
     }
   };
 

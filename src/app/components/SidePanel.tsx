@@ -38,20 +38,22 @@ export default function SidePanel() {
       <div className="border border-gray-4000 w-full h-full p-4 rounded-lg bg-gray-100 shadow-xl">
         <button
           onClick={handleBackToHome}
-          className="bg-white text-black px-4 py-2 rounded-lg transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg w-full border shadow-md"
+          className="bg-white text-black px-4 py-2 rounded-lg transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg w-full border shadow-md text-lg"
         >
           Back to Home
         </button>
 
         <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
-          <h2 className="text-xl font-bold mb-2 text-black text-center">Vehicle Width</h2>
+          <h2 className="text-2xl font-bold mb-2 text-black text-center">Vehicle Width</h2>
+          <div className="flex justify-center mb-2">
+            <img src="/icons/vehicle.png" alt="Vehicle Icon" className="w-12 h-12" />
+          </div>
           <div className="flex items-center justify-center space-x-2">
-            <img src="/icons/vehicle.png" alt="Vehicle Icon" className="w-6 h-6" />
             <input
               type="text"
               value={vehicleWidth}
               onChange={(e) => setVehicleWidth(e.target.value)}
-              className="border p-2 rounded w-1/2 text-black"
+              className="border p-2 rounded w-1/2 text-black text-lg text-center w-40"
             />
           </div>
         </div>
@@ -94,7 +96,7 @@ export default function SidePanel() {
 
         <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg flex flex-col items-center">
           <h2 className="text-xl font-bold mb-2 text-black text-center">Upload CSV File</h2>
-          <label className="bg-gray-200 text-black rounded cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg text-center px-4 py-2 w-full">
+          <label className="bg-gray-200 text-black rounded cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg text-center px-4 py-2 w-full border border-gray-4000 rounded-lg bg-gray-100 shadow-lg">
             Choose File
             <input
               type="file"
@@ -116,7 +118,7 @@ export default function SidePanel() {
           </div>
           <button
             onClick={handleUpload}
-            className="bg-green-500 text-white rounded hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2 px-4 py-2 w-full"
+            className="bg-green-500 text-white rounded hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2 px-4 py-2 w-full rounded-lg bg-gray-100 shadow-lg"
           >
             Upload
           </button>

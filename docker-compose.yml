@@ -1,15 +1,40 @@
 services:
   frontend:
     build: 
-      context: ./
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
-      - ./:/app
+      - ./backend:/app
       - /app/node_modules
+      - type: bind
+        source: ./preproccessing
+        target: /app/preproccessing
+      - type: bind
+        source: ./backend/data
+        target: /app/data
+    working_dir: /app
     environment:
-      - VITE_API_URL=http://localhost:3000
+      - NODE_ENV=development
+      - PREPROCESSING_DIR=/app/preproccessing
+      - DATA_DIR=/app/data
     networks:
       - app-network
 

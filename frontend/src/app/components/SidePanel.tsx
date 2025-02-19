@@ -1,0 +1,183 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { sendFileToBackend, fetchOptions, fetchGPSDataMin, fetchGPSDataMax } from '@/service/dataService';
+import { useQuery } from '@tanstack/react-query';
+
+export default function SidePanel() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [vehicleWidth, setVehicleWidth] = useState(searchParams.get('width') || '');
+  const [switchState, setSwitchState] = useState('MIN');
+  const [selectedDataset, setSelectedDataset] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleBackToHome = () => {
+    router.push('/');
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setFile(event.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    try {
+      if (file) {
+        await sendFileToBackend(file);
+        alert("File saved!");
+      } else {
+        alert("Please choose a file first!");
+      }
+    } catch (e) {
+      alert(e);
+    }
+  };
+
+  const handleClearFile = () => {
+    setFile(null);
+  };
+
+  const fetchGPSData = async (min: boolean, selected: string) => {
+    return min ? fetchGPSDataMin(selected) : fetchGPSDataMax(selected);
+  };
+
+  const [selected, setSelected] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('selectedDataset');
+      return saved || "dataset";
+    }
+    return "dataset";
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedDataset', selected);
+    }
+  }, [selected]);
+
+  const [min, setMin] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('minMaxToggle');
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('minMaxToggle', JSON.stringify(min));
+    }
+  }, [min]);
+
+  const { data: gpsData = [] } = useQuery({
+    queryKey: ["gpsData", min, selected],
+    queryFn: () => fetchGPSData(min, selected),
+  });    
+
+  const { data: options = [], isLoading: optionsLoading } = useQuery<string[]>({
+    queryKey: ["options"], 
+    queryFn: () => fetchOptions(), 
+  });
+
+  return (
+    <div className="w-1/4 p-4 min-w-[300px] flex flex-col items-center space-y-6 ">
+      <div className="border border-gray-4000 w-full h-full p-4 rounded-lg bg-gray-100 shadow-xl">
+        <button
+          onClick={handleBackToHome}
+          className="bg-white text-black px-4 py-2 rounded-lg transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg w-full border shadow-md text-lg"
+        >
+          Back to Home
+        </button>
+
+        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
+          <h2 className="text-2xl font-bold mb-2 text-black text-center">Vehicle Width</h2>
+          <div className="flex justify-center mb-2">
+            <img src="/icons/vehicle.png" alt="Vehicle Icon" className="w-12 h-12" />
+          </div>
+          <div className="flex items-center justify-center space-x-2">
+            <input
+              type="text"
+              value={vehicleWidth}
+              onChange={(e) => setVehicleWidth(e.target.value)}
+              className="border p-2 rounded w-1/2 text-black text-lg text-center w-40"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
+          <h2 className="text-xl font-bold mb-2 text-black text-center">Width Mode</h2>
+          <div className="flex items-center justify-center space-x-4">
+            <span className="text-black">MIN</span>
+            <div className="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
+              <input
+                type="checkbox"
+                name="toggle"
+                id="toggle"
+                checked={switchState === 'MAX'}
+                onChange={() => setSwitchState(switchState === 'MIN' ? 'MAX' : 'MIN')}
+                className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out"
+                style={{ transform: switchState === 'MAX' ? 'translateX(100%)' : 'translateX(0)' }}
+              />
+              <label
+                htmlFor="toggle"
+                className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"
+              ></label>
+            </div>
+            <span className="text-black">MAX</span>
+          </div>
+          <p className="text-center text-sm text-gray-600 mt-2">Selected mode: {switchState}</p>
+        </div>
+
+        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
+          <h2 className="text-xl font-bold mb-2 text-black text-center">Select Dataset</h2>
+          <select
+            value={selectedDataset}
+            onChange={(e) => setSelectedDataset(e.target.value)}
+            className="border p-2 rounded w-full text-black"
+          >
+            <option value="">Select a dataset</option>
+            {options.map((item) => (
+              <option key={item} value={item.toLowerCase()}>
+                {item.toUpperCase()}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg flex flex-col items-center">
+          <h2 className="text-xl font-bold mb-2 text-black text-center">Upload CSV File</h2>
+          <label className="bg-gray-200 text-black rounded cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg text-center px-4 py-2 w-full border border-gray-4000 rounded-lg bg-gray-100 shadow-lg">
+            Choose File
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+          <div className="flex items-center space-x-2 mt-2">
+            <p className="text-sm text-black">{file ? file.name : "No file chosen"}</p>
+            {file && (
+              <button
+                onClick={handleClearFile}
+                className="text-red-500 text-sm hover:underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <button
+            onClick={handleUpload}
+            className="bg-green-500 text-white rounded hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2 px-4 py-2 w-full rounded-lg bg-gray-100 shadow-lg"
+          >
+            Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

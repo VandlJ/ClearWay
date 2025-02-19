@@ -11,13 +11,15 @@ const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ss
 
 export default function MapPanel() {
   return (
-    <div className="w-5/6">
-      <MapContainer center={[49.7475, 13.3776]} zoom={13} className="h-full">
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-      </MapContainer>
+    <div className="w-3/4 p-4">
+      <div className="border w-full h-full rounded-lg"> 
+        <MapContainer center={[49.7475, 13.3776]} zoom={13} className="h-full">
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+        </MapContainer>
+      </div>
     </div>
   );
 } 

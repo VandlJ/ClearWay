@@ -10,7 +10,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "ClearWay",
-  description: "Corridor visualization for vehicles",
+  description: "Emergency vehicle routing application",
 };
 
 export default function RootLayout({
@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="cs">
       <body
-        className={`${poppins.variable} antialiased bg-gray-100`}
+        className={`${poppins.variable} antialiased min-h-screen bg-gradient-to-br from-gray-100 to-gray-200`}
       >
         {children}
       </body>

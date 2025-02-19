@@ -34,16 +34,16 @@ export default function SidePanel() {
   };
 
   return (
-    <div className="w-1/6 min-w-[300px] bg-white p-4 shadow-lg flex flex-col items-center space-y-6">
-      <div className="w-5/6 border p-4 rounded-lg">
+    <div className="w-1/4 p-4 min-w-[300px] flex flex-col items-center space-y-6 ">
+      <div className="border border-gray-4000 w-full h-full p-4 rounded-lg bg-gray-100 shadow-xl">
         <button
           onClick={handleBackToHome}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg w-full"
+          className="bg-white text-black px-4 py-2 rounded-lg transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg w-full border shadow-md"
         >
           Back to Home
         </button>
 
-        <div className="w-full mt-4">
+        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
           <h2 className="text-xl font-bold mb-2 text-black text-center">Vehicle Width</h2>
           <div className="flex items-center justify-center space-x-2">
             <img src="/icons/vehicle.png" alt="Vehicle Icon" className="w-6 h-6" />
@@ -56,7 +56,7 @@ export default function SidePanel() {
           </div>
         </div>
 
-        <div className="w-full mt-4">
+        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
           <h2 className="text-xl font-bold mb-2 text-black text-center">Width Mode</h2>
           <div className="flex items-center justify-center space-x-4">
             <span className="text-black">MIN</span>
@@ -80,7 +80,7 @@ export default function SidePanel() {
           <p className="text-center text-sm text-gray-600 mt-2">Selected mode: {switchState}</p>
         </div>
 
-        <div className="w-full mt-4">
+        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
           <h2 className="text-xl font-bold mb-2 text-black text-center">Select Dataset</h2>
           <select
             value={selectedDataset}
@@ -89,14 +89,12 @@ export default function SidePanel() {
           >
             <option value="">Select a dataset</option>
             <option value="dataset1">Dataset 1</option>
-            <option value="dataset2">Dataset 2</option>
-            <option value="dataset3">Dataset 3</option>
           </select>
         </div>
 
-        <div className="w-full mt-4 flex flex-col items-center">
+        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg flex flex-col items-center">
           <h2 className="text-xl font-bold mb-2 text-black text-center">Upload CSV File</h2>
-          <label className="bg-gray-200 text-black px-4 py-2 rounded cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg">
+          <label className="bg-gray-200 text-black rounded cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg text-center px-4 py-2 w-full">
             Choose File
             <input
               type="file"
@@ -118,7 +116,7 @@ export default function SidePanel() {
           </div>
           <button
             onClick={handleUpload}
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2"
+            className="bg-green-500 text-white rounded hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2 px-4 py-2 w-full"
           >
             Upload
           </button>

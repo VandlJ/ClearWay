@@ -2,16 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
 import { sendFileToBackend, fetchOptions } from '@/service/dataService';
 import { useQuery } from '@tanstack/react-query';
 import { useDataset } from '@/app/components/DatasetContextProvider';
 
 export default function SidePanel() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { selectedDataset, setSelectedDataset, vehicleWidth, setVehicleWidth } = useDataset();
-  const [switchState, setSwitchState] = useState('MIN');
+  const { 
+    selectedDataset, 
+    setSelectedDataset, 
+    vehicleWidth, 
+    setVehicleWidth, 
+    isMinMode, 
+    setIsMinMode,
+    vehicleName 
+  } = useDataset();
+  const [switchState, setSwitchState] = useState(() => isMinMode ? 'MIN' : 'MAX');
   const [file, setFile] = useState<File | null>(null);
 
   const handleBackToHome = () => {
@@ -60,6 +66,12 @@ export default function SidePanel() {
     queryFn: () => fetchOptions(), 
   });
 
+  const handleSwitchChange = () => {
+    const newState = switchState === 'MIN' ? 'MAX' : 'MIN';
+    setSwitchState(newState);
+    setIsMinMode(newState === 'MIN');
+  };
+
   return (
     <div className="w-1/4 p-4 min-w-[300px] flex flex-col items-center space-y-6 ">
       <div className="border border-gray-4000 w-full h-full p-4 rounded-lg bg-gray-100 shadow-xl">
@@ -75,12 +87,13 @@ export default function SidePanel() {
           <div className="flex justify-center mb-2">
             <img src="/icons/vehicle.png" alt="Vehicle Icon" className="w-12 h-12" />
           </div>
+          <p className="text-center text-black mb-2">{vehicleName}</p>
           <div className="flex items-center justify-center space-x-2">
             <input
               type="text"
               value={vehicleWidth}
               onChange={(e) => setVehicleWidth(e.target.value)}
-              className="border p-2 rounded w-1/2 text-black text-lg text-center w-40"
+              className="border p-2 rounded w-1/2 text-black text-lg text-center"
             />
           </div>
         </div>
@@ -95,7 +108,7 @@ export default function SidePanel() {
                 name="toggle"
                 id="toggle"
                 checked={switchState === 'MAX'}
-                onChange={() => setSwitchState(switchState === 'MIN' ? 'MAX' : 'MIN')}
+                onChange={handleSwitchChange}
                 className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out"
                 style={{ transform: switchState === 'MAX' ? 'translateX(100%)' : 'translateX(0)' }}
               />
@@ -106,7 +119,6 @@ export default function SidePanel() {
             </div>
             <span className="text-black">MAX</span>
           </div>
-          <p className="text-center text-sm text-gray-600 mt-2">Selected mode: {switchState}</p>
         </div>
 
         <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
@@ -127,7 +139,7 @@ export default function SidePanel() {
 
         <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg flex flex-col items-center">
           <h2 className="text-xl font-bold mb-2 text-black text-center">Upload CSV File</h2>
-          <label className="bg-gray-200 text-black rounded cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg text-center px-4 py-2 w-full border border-gray-4000 rounded-lg bg-gray-100 shadow-lg">
+          <label className="bg-gray-200 text-black cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg text-center px-4 py-2 w-full border border-gray-4000 rounded-lg shadow-lg">
             Choose File
             <input
               type="file"
@@ -149,7 +161,7 @@ export default function SidePanel() {
           </div>
           <button
             onClick={handleUpload}
-            className="bg-green-500 text-white rounded hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2 px-4 py-2 w-full rounded-lg bg-gray-100 shadow-lg"
+            className="bg-green-500 text-white hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2 px-4 py-2 w-full rounded-lg shadow-lg"
           >
             Upload
           </button>

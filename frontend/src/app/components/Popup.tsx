@@ -15,12 +15,13 @@ interface PopupProps {
 }
 
 export default function Popup({ title, onClose, options }: PopupProps) {
+  const { setVehicleWidth, setVehicleName } = useDataset();
   const router = useRouter();
-  const { setVehicleWidth } = useDataset();
 
   const handleOptionClick = (option: Option) => {
     setVehicleWidth(option.width.toString());
-    router.push(`/map?name=${encodeURIComponent(option.name)}&width=${option.width}`);
+    setVehicleName(option.name);
+    router.push('/map');  // No need for query parameters
   };
 
   return (

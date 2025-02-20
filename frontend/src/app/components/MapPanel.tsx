@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useDataset } from '@/app/components/DatasetContextProvider';
+import { useDataset } from '@/app/providers/DatasetContextProvider';
 import { fetchGPSDataMin, fetchGPSDataMax } from '@/service/dataService';
 import MapLegend from './MapLegend';
 
@@ -116,7 +116,7 @@ const generateIcon = (width: number) => {
             style={{
               height: "100%",
               width: "100%",
-              position: "relative"  // Add this
+              position: "relative"
             }}
             className='border border-gray-4000 rounded-lg shadow-sm'
           >

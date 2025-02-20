@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import { ReactQueryProvider } from "./components/ReactQueryProvider";
-import { DatasetProvider } from "./components/DatasetContextProvider";
+import { ReactQueryProvider } from "@/app/providers/ReactQueryProvider";
+import { DatasetProvider } from "@/app/providers/DatasetContextProvider";
 
 const poppins = Poppins({
   variable: "--font-poppins",

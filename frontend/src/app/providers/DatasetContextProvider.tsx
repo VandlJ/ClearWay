@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { fetchOptions } from '@/service/dataService';
 
 interface DatasetContextType {
   selectedDataset: string;
@@ -11,6 +12,8 @@ interface DatasetContextType {
   setIsMinMode: (isMin: boolean) => void;
   vehicleName: string;
   setVehicleName: (name: string) => void;
+  options: string[];
+  refreshOptions: () => void;
 }
 
 const DatasetContext = createContext<DatasetContextType | undefined>(undefined);
@@ -36,6 +39,16 @@ export function DatasetProvider({ children }: React.PropsWithChildren) {
     }
     return true;
   });
+  const [options, setOptions] = useState<string[]>([]);
+
+  const refreshOptions = async () => {
+    const fetchedOptions = await fetchOptions();
+    setOptions(fetchedOptions);
+  };
+
+  useEffect(() => {
+    refreshOptions();
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -54,7 +67,9 @@ export function DatasetProvider({ children }: React.PropsWithChildren) {
       isMinMode,
       setIsMinMode,
       vehicleName,
-      setVehicleName
+      setVehicleName,
+      options,
+      refreshOptions
     }}>
       {children}
     </DatasetContext.Provider>

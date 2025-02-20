@@ -12,6 +12,8 @@ const PORT = 3000;
 
 app.use(cors());
 
+let processingStatus = {}; // Object to keep track of file processing status
+
 function parseCSVFile(filePath) {
   return new Promise((resolve, reject) => {
     const results = [];
@@ -139,24 +141,13 @@ app.post("/add", upload.single("file"), (req, res) => {
   // File uploaded successfully
   console.log("Uploaded file:", req.file);
 
+  // Set processing status to false initially
+  processingStatus[req.file.originalname] = false;
+
   // You can also return the file information or something else
   res.json({ message: "File uploaded successfully", file: req.file });
   setImmediate(() => {
     console.log(`Running script for ${req.file.filename}...`);
-    /*const command = `ls ${req.file.destination}`;
-    console.log(`Executing command: ${command}`);
-
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Script error: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`Script stderr: ${stderr}`);
-        return;
-      }
-      console.log(`Script output:\n${stdout}`);
-    });*/
 
     // reduce
     exec(
@@ -186,9 +177,23 @@ app.post("/add", upload.single("file"), (req, res) => {
           return;
         }
         console.log(`Script output: ${stdout}`);
+
+        // Set processing status to true after scripts are done
+        processingStatus[req.file.originalname] = true;
       }
     );
   });
+});
+
+app.get("/data/status", (req, res) => {
+  const { filename } = req.query;
+
+  if (!filename) {
+    return res.status(400).json({ error: "Filename is required" });
+  }
+
+  const isProcessed = processingStatus[filename] || false;
+  res.json({ isProcessed });
 });
 
 app.listen(PORT, () => {

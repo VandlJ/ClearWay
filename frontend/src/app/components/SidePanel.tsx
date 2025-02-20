@@ -1,70 +1,20 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { sendFileToBackend, fetchOptions } from '@/service/dataService';
-import { useQuery } from '@tanstack/react-query';
-import { useDataset } from '@/app/components/DatasetContextProvider';
+import { useDataset } from '@/app/providers/DatasetContextProvider';
+import VehicleWidthInput from './VehicleWidthInput';
+import DatasetSelection from './DatasetSelection';
+import FileUpload from './FileUpload';
 
 export default function SidePanel() {
   const router = useRouter();
-  const { 
-    selectedDataset, 
-    setSelectedDataset, 
-    vehicleWidth, 
-    setVehicleWidth, 
-    isMinMode, 
-    setIsMinMode,
-    vehicleName 
-  } = useDataset();
+  const { isMinMode, setIsMinMode } = useDataset();
   const [switchState, setSwitchState] = useState(() => isMinMode ? 'MIN' : 'MAX');
-  const [file, setFile] = useState<File | null>(null);
 
   const handleBackToHome = () => {
     router.push('/');
   };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setFile(event.target.files[0]);
-    }
-  };
-
-  const handleUpload = async () => {
-    try {
-      if (file) {
-        await sendFileToBackend(file);
-        alert("File saved!");
-      } else {
-        alert("Please choose a file first!");
-      }
-    } catch (e) {
-      alert(e);
-    }
-  };
-
-  const handleClearFile = () => {
-    setFile(null);
-  };
-
-  const [min, setMin] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('minMaxToggle');
-      return saved ? JSON.parse(saved) : false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('minMaxToggle', JSON.stringify(min));
-    }
-  }, [min]);
-
-  const { data: options = [], isLoading: optionsLoading } = useQuery<string[]>({
-    queryKey: ["options"], 
-    queryFn: () => fetchOptions(), 
-  });
 
   const handleSwitchChange = () => {
     const newState = switchState === 'MIN' ? 'MAX' : 'MIN';
@@ -82,21 +32,7 @@ export default function SidePanel() {
           Back to Home
         </button>
 
-        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
-          <h2 className="text-2xl font-bold mb-2 text-black text-center">Vehicle Width</h2>
-          <div className="flex justify-center mb-2">
-            <img src="/icons/vehicle.png" alt="Vehicle Icon" className="w-12 h-12" />
-          </div>
-          <p className="text-center text-black mb-2">{vehicleName}</p>
-          <div className="flex items-center justify-center space-x-2">
-            <input
-              type="text"
-              value={vehicleWidth}
-              onChange={(e) => setVehicleWidth(e.target.value)}
-              className="border p-2 rounded w-1/2 text-black text-lg text-center"
-            />
-          </div>
-        </div>
+        <VehicleWidthInput />
 
         <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
           <h2 className="text-xl font-bold mb-2 text-black text-center">Width Mode</h2>
@@ -121,51 +57,9 @@ export default function SidePanel() {
           </div>
         </div>
 
-        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
-          <h2 className="text-xl font-bold mb-2 text-black text-center">Select Dataset</h2>
-          <select
-            value={selectedDataset}
-            onChange={(e) => setSelectedDataset(e.target.value)}
-            className="border p-2 rounded w-full text-black"
-          >
-            <option value="">Select a dataset</option>
-            {options.map((item) => (
-              <option key={item} value={item.toLowerCase()}>
-                {item.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </div>
+        <DatasetSelection />
 
-        <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg flex flex-col items-center">
-          <h2 className="text-xl font-bold mb-2 text-black text-center">Upload CSV File</h2>
-          <label className="bg-gray-200 text-black cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg text-center px-4 py-2 w-full border border-gray-4000 rounded-lg shadow-lg">
-            Choose File
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </label>
-          <div className="flex items-center space-x-2 mt-2">
-            <p className="text-sm text-black">{file ? file.name : "No file chosen"}</p>
-            {file && (
-              <button
-                onClick={handleClearFile}
-                className="text-red-500 text-sm hover:underline"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <button
-            onClick={handleUpload}
-            className="bg-green-500 text-white hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2 px-4 py-2 w-full rounded-lg shadow-lg"
-          >
-            Upload
-          </button>
-        </div>
+        <FileUpload />
       </div>
     </div>
   );

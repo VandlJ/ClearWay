@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from "./components/ReactQueryProvider";
+import { DatasetProvider } from "./components/DatasetContextProvider";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -25,7 +26,9 @@ export default function RootLayout({
         className={`${poppins.variable} antialiased min-h-screen bg-gradient-to-br from-gray-100 to-gray-200`}
       >
         <ReactQueryProvider>
-          {children}
+          <DatasetProvider>
+            {children}
+          </DatasetProvider>
         </ReactQueryProvider>
       </body>
     </html>

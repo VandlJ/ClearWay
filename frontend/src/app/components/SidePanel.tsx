@@ -3,15 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
-import { sendFileToBackend, fetchOptions, fetchGPSDataMin, fetchGPSDataMax } from '@/service/dataService';
+import { sendFileToBackend, fetchOptions } from '@/service/dataService';
 import { useQuery } from '@tanstack/react-query';
+import { useDataset } from '@/app/components/DatasetContextProvider';
 
 export default function SidePanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [vehicleWidth, setVehicleWidth] = useState(searchParams.get('width') || '');
+  const { selectedDataset, setSelectedDataset, vehicleWidth, setVehicleWidth } = useDataset();
   const [switchState, setSwitchState] = useState('MIN');
-  const [selectedDataset, setSelectedDataset] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
   const handleBackToHome = () => {
@@ -41,24 +41,6 @@ export default function SidePanel() {
     setFile(null);
   };
 
-  const fetchGPSData = async (min: boolean, selected: string) => {
-    return min ? fetchGPSDataMin(selected) : fetchGPSDataMax(selected);
-  };
-
-  const [selected, setSelected] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('selectedDataset');
-      return saved || "dataset";
-    }
-    return "dataset";
-  });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('selectedDataset', selected);
-    }
-  }, [selected]);
-
   const [min, setMin] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('minMaxToggle');
@@ -72,11 +54,6 @@ export default function SidePanel() {
       localStorage.setItem('minMaxToggle', JSON.stringify(min));
     }
   }, [min]);
-
-  const { data: gpsData = [] } = useQuery({
-    queryKey: ["gpsData", min, selected],
-    queryFn: () => fetchGPSData(min, selected),
-  });    
 
   const { data: options = [], isLoading: optionsLoading } = useQuery<string[]>({
     queryKey: ["options"], 

@@ -1,0 +1,44 @@
+{
+    "common": {
+        "navbar": {
+            "appName": "ClearWay",
+            "links": {
+                "home": "Domů",
+                "map": "Mapa"
+            }
+        }
+    },
+    "pages": {
+        "home": {
+            "title": "ClearWay",
+            "subtitle": "Vizualizace šířky koridorů pro vozidla IZS",
+            "menu": {
+                "tile1": {
+                    "title": "Hasiči",
+                    "option1": "Dopravní automobil",
+                    "option2": "Technický automobil",
+                    "option3": "Automobilový žebřík",
+                    "option4": "Cisternová automobilová stříkačka"
+                }, 
+                "tile2": {
+                    "title": "Záchranná služba",
+                    "option1": "Sanitní vůz typu A",
+                    "option2": "Sanitní vůz typu B",
+                    "option3": "Sanitní vůz typu C",
+                    "option4": "Rendez-vous"
+                },
+                "tile3": {
+                    "title": "Policie",
+                    "option1": "Osobní vozidlo",
+                    "option2": "Dodávka",
+                    "option3": "Transportér",
+                    "option4": "Speciál"
+                }, 
+                "button": "Zavřít"
+            }
+        },
+        "map": {
+
+        }
+    }
+}

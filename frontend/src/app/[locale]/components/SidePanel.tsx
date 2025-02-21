@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDataset } from '@/app/providers/DatasetContextProvider';
-import VehicleWidthInput from './VehicleWidthInput';
-import DatasetSelection from './DatasetSelection';
-import FileUpload from './FileUpload';
+import VehicleWidthInput from '@/app/[locale]/components/VehicleWidthInput';
+import DatasetSelection from '@/app/[locale]/components/DatasetSelection';
+import FileUpload from '@/app/[locale]/components/FileUpload';
 
 export default function SidePanel() {
   const router = useRouter();

@@ -1,0 +1,44 @@
+{
+    "common": {
+        "navbar": {
+            "appName": "ClearWay",
+            "links": {
+                "home": "Home",
+                "map": "Map"
+            }
+        }
+    },
+    "pages": {
+        "home": {
+            "title": "ClearWay",
+            "subtitle": "Visualisation of corridor widths for IRS vehicles",
+            "menu": {
+                "tile1": {
+                    "title": "Firefighters",
+                    "option1": "Transport Vehicle",
+                    "option2": "Technical Vehicle",
+                    "option3": "Automotive Ladder",
+                    "option4": "Tank Car Sprayer"
+                }, 
+                "tile2": {
+                    "title": "Ambulance",
+                    "option1": "Ambulance Type A",
+                    "option2": "Ambulance Type B",
+                    "option3": "Ambulance Type C",
+                    "option4": "Rendez-vous"
+                },
+                "tile3": {
+                    "title": "Police",
+                    "option1": "Passenger Car",
+                    "option2": "Van",
+                    "option3": "Personnel Carrier",
+                    "option4": "Special Vehicle"
+                }, 
+                "button": "Close"
+            }
+        },
+        "map": {
+
+        }
+    }
+}

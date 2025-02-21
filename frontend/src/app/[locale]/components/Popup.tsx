@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Portal from './Portal';
 import { useDataset } from '@/app/providers/DatasetContextProvider';
+import { useTranslations } from 'next-intl';
 
 interface Option {
   name: string;
@@ -15,6 +16,8 @@ interface PopupProps {
 }
 
 export default function Popup({ title, onClose, options }: PopupProps) {
+  const t = useTranslations("pages.home.menu");
+
   const { setVehicleWidth, setVehicleName } = useDataset();
   const router = useRouter();
 
@@ -41,7 +44,9 @@ export default function Popup({ title, onClose, options }: PopupProps) {
               </button>
             ))}
           </div>
-          <button onClick={onClose} className="bg-red-500 text-white p-2 rounded transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg">Zavřít</button>
+          <button onClick={onClose} className="bg-red-500 text-white p-2 rounded transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg">
+            {t("button")}
+          </button>
         </div>
       </div>
     </Portal>

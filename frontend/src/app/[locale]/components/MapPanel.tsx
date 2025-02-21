@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDataset } from '@/app/providers/DatasetContextProvider';
 import { fetchGPSDataMin, fetchGPSDataMax } from '@/service/dataService';
-import MapLegend from './MapLegend';
+import MapLegend from '@/app/[locale]/components/MapLegend';
 
 // Define the interface for the GPS data
 interface GPSData {

@@ -1,7 +1,7 @@
 "use client";
 
-import SidePanel from '../components/SidePanel';
-import MapPanel from '../components/MapPanel';
+import SidePanel from '@/app/[locale]/components/SidePanel';
+import MapPanel from '@/app/[locale]/components/MapPanel';
 
 export default function MapPage() {
   return (

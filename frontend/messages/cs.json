@@ -38,7 +38,32 @@
             }
         },
         "map": {
-
+            "sidePanel": {
+                "vehicleWidth": "Šířka vozidla",
+                "widthMode": "Režim šířky",
+                "dataset": {
+                    "select": "Výběr datové sady",
+                    "upload": {
+                        "title": "Nahrávání CSV souboru",
+                        "chooseButton": "Vyberte soubor",
+                        "clearButton": "Odebrat",
+                        "uploadButton": "Nahrát soubor",
+                        "messages": {
+                            "noFileChosen": "Nebyl vybrán žádný soubor",
+                            "success": "Soubor byl úspěšně uložen!",
+                            "noFileError": "Nejprve vyberte soubor!",
+                            "uploadError": "Chyba při nahrávání souboru. Zkuste to prosím znovu.",
+                            "timeoutError": "Zpracování souboru trvalo příliš dlouho. Zkuste to prosím znovu."
+                        }
+                    }
+                }
+            },
+            "legend": {
+                "title": "Legenda",
+                "red": "Bez rezervy",
+                "yellow": "Rezerva menší než 50 cm",
+                "green": "Rezerva větší než 50 cm"
+            }
         }
     }
 }

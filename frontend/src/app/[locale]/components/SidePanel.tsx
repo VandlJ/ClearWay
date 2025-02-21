@@ -1,20 +1,21 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { useDataset } from '@/app/providers/DatasetContextProvider';
 import VehicleWidthInput from '@/app/[locale]/components/VehicleWidthInput';
 import DatasetSelection from '@/app/[locale]/components/DatasetSelection';
 import FileUpload from '@/app/[locale]/components/FileUpload';
+import { useTranslations } from 'next-intl';
 
 export default function SidePanel() {
-  const router = useRouter();
-  const { isMinMode, setIsMinMode } = useDataset();
-  const [switchState, setSwitchState] = useState(() => isMinMode ? 'MIN' : 'MAX');
+  const t = useTranslations("pages.map.sidePanel");
 
-  const handleBackToHome = () => {
-    router.push('/');
-  };
+  const { isMinMode, setIsMinMode } = useDataset();
+  const [switchState, setSwitchState] = useState('MIN'); // Set default state
+
+  useEffect(() => {
+    setSwitchState(isMinMode ? 'MIN' : 'MAX');
+  }, [isMinMode]);
 
   const handleSwitchChange = () => {
     const newState = switchState === 'MIN' ? 'MAX' : 'MIN';
@@ -25,17 +26,13 @@ export default function SidePanel() {
   return (
     <div className="w-1/4 p-4 min-w-[300px] flex flex-col items-center space-y-6 ">
       <div className="border border-gray-4000 w-full h-full p-4 rounded-lg bg-gray-100 shadow-xl">
-        <button
-          onClick={handleBackToHome}
-          className="bg-white text-black px-4 py-2 rounded-lg transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg w-full border shadow-md text-lg"
-        >
-          Back to Home
-        </button>
 
         <VehicleWidthInput />
 
         <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">
-          <h2 className="text-xl font-bold mb-2 text-black text-center">Width Mode</h2>
+          <h2 className="text-xl font-bold mb-2 text-black text-center">
+            {t("widthMode")}
+          </h2>
           <div className="flex items-center justify-center space-x-4">
             <span className="text-black">MIN</span>
             <div className="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">

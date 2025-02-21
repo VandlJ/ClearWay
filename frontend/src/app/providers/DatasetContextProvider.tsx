@@ -26,19 +26,26 @@ export function DatasetProvider({ children }: React.PropsWithChildren) {
     }
     return '';
   });
+
   const [vehicleName, setVehicleName] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('vehicleName') || '';
     }
     return '';
   });
-  const [isMinMode, setIsMinMode] = useState<boolean>(() => {
+
+  const [isMinMode, setIsMinMode] = useState<boolean>(true); // Set a default value directly
+
+  useEffect(() => {
+    // Move localStorage operations to useEffect
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('minMaxToggle');
-      return saved ? JSON.parse(saved) : true;
+      if (saved !== null) {
+        setIsMinMode(JSON.parse(saved));
+      }
     }
-    return true;
-  });
+  }, []);
+
   const [options, setOptions] = useState<string[]>([]);
 
   const refreshOptions = async () => {

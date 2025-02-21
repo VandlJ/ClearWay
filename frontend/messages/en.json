@@ -38,7 +38,32 @@
             }
         },
         "map": {
-
+            "sidePanel": {
+                "vehicleWidth": "Vehicle Width",
+                "widthMode": "Width Mode",
+                "dataset": {
+                    "select": "Select Dataset",
+                    "upload": {
+                        "title": "Upload CSV File",
+                        "chooseButton": "Choose File",
+                        "clearButton": "Clear",
+                        "uploadButton": "Upload",
+                        "messages": {
+                            "noFileChosen": "No file chosen",
+                            "success": "File saved successfully!",
+                            "noFileError": "Please choose a file first!",
+                            "uploadError": "Error uploading file. Please try again.",
+                            "timeoutError": "File processing timed out. Please try again."
+                        }
+                    }
+                }
+            },
+            "legend": {
+                "title": "Legend",
+                "red": "No reserve",
+                "yellow": "Reserve less than 50 cm",
+                "green": "Reserve more than 50 cm"
+            }
         }
     }
 }

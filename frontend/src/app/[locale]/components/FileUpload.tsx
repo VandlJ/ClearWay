@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { sendFileToBackend, checkFileProcessingStatus } from '@/service/dataService';
 import { useDataset } from '@/app/providers/DatasetContextProvider';
+import { useTranslations } from 'next-intl';
 
 export default function FileUpload() {
+  const t = useTranslations("pages.map.sidePanel.dataset.upload");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -22,16 +24,16 @@ export default function FileUpload() {
     try {
       if (file) {
         await sendFileToBackend(file);
-        setSuccess("File saved successfully!");
+        setSuccess(t("messages.success"));
         setFile(null); // Clear the file after successful upload
         pollFileProcessingStatus(file.name); // Poll for file processing status
         setTimeout(() => setSuccess(null), 3000); // Clear success message after 3 seconds
       } else {
-        setError("Please choose a file first!");
+        setError(t("messages.noFileError"));
         setTimeout(() => setError(null), 3000); // Clear error message after 3 seconds
       }
     } catch (e) {
-      setError("Error uploading file. Please try again.");
+      setError(t("messages.uploadError"));
       setTimeout(() => setError(null), 3000); // Clear error message after 3 seconds
     }
   };
@@ -50,7 +52,7 @@ export default function FileUpload() {
     if (isProcessed) {
       refreshOptions(); // Refresh dataset options
     } else {
-      setError("File processing timed out. Please try again.");
+      setError(t("messages.timeoutError"));
       setTimeout(() => setError(null), 3000); // Clear error message after 3 seconds
     }
   };
@@ -63,9 +65,11 @@ export default function FileUpload() {
 
   return (
     <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg flex flex-col items-center">
-      <h2 className="text-xl font-bold mb-2 text-black text-center">Upload CSV File</h2>
+      <h2 className="text-xl font-bold mb-2 text-black text-center">
+        {t("title")}
+      </h2>
       <label className="bg-gray-200 text-black cursor-pointer hover:bg-gray-300 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg text-center px-4 py-2 w-full border border-gray-4000 rounded-lg shadow-lg">
-        Choose File
+        {t("chooseButton")}
         <input
           key={file ? file.name : 'file-input'} // Force re-render when file is cleared
           type="file"
@@ -75,13 +79,13 @@ export default function FileUpload() {
         />
       </label>
       <div className="flex items-center space-x-2 mt-2">
-        <p className="text-sm text-black">{file ? file.name : "No file chosen"}</p>
+        <p className="text-sm text-black">{file ? file.name : t("messages.noFileChosen")}</p>
         {file && (
           <button
             onClick={handleClearFile}
             className="text-red-500 text-sm hover:underline"
           >
-            Clear
+            {t("clearButton")}
           </button>
         )}
       </div>
@@ -91,7 +95,7 @@ export default function FileUpload() {
         onClick={handleUpload}
         className="bg-green-500 text-white hover:bg-green-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg mt-2 px-4 py-2 w-full rounded-lg shadow-lg"
       >
-        Upload
+        {t("uploadButton")}
       </button>
     </div>
   );

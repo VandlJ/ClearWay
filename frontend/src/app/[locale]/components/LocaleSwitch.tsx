@@ -42,7 +42,7 @@ function LocaleLink({ locale }: { locale: Locale }) {
       href={pathnameWithoutLocale}
       locale={locale}
       className={clsx(
-        "px-1 font-bold transition-opacity duration-300",
+        "px-1 font-bold transition-opacity duration-300 text-gray-800",
         currentLocale === locale ? "opacity-100" : "opacity-60"
       )}
     >

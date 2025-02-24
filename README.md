@@ -56,8 +56,8 @@ The entire application is containerized using Docker, making it easy to run in a
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/VandlJ/corridor-measurement.git
-cd corridor-measurement
+git clone https://github.com/VandlJ/ClearWay.git
+cd ClearWay
 ```
 
 2. Build and start the containers:

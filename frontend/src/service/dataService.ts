@@ -1,7 +1,7 @@
 export const fetchGPSDataMin = async (selected: string) => {
   try {
     const response = await fetch(
-      `http://localhost:3000/data/reduced/min/${selected}`
+      `https://storagegrid.eu/api/data/reduced/min/${selected}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch GPS data");
@@ -17,7 +17,7 @@ export const fetchGPSDataMin = async (selected: string) => {
 export const fetchGPSDataMax = async (selected: string) => {
   try {
     const response = await fetch(
-      `http://localhost:3000/data/reduced/max/${selected}`
+      `https://storagegrid.eu/api/data/reduced/max/${selected}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch GPS data");
@@ -31,7 +31,7 @@ export const fetchGPSDataMax = async (selected: string) => {
 };
 
 export const fetchOptions = async () => {
-  const response = await fetch("http://localhost:3000/data/options");
+  const response = await fetch("https://storagegrid.eu/api/data/options");
 
   if (!response.ok) {
     throw new Error("Error fetching options");
@@ -45,7 +45,7 @@ export const sendFileToBackend = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch("http://localhost:3000/add", {
+  const response = await fetch("https://storagegrid.eu/api/add", {
     method: "POST",
     body: formData, // Send the form data with the file
   });
@@ -59,7 +59,7 @@ export const sendFileToBackend = async (file: File) => {
 };
 
 export const checkFileProcessingStatus = async (filename: string) => {
-  const response = await fetch(`http://localhost:3000/data/status?filename=${filename}`);
+  const response = await fetch(`https://storagegrid.eu/api/data/status?filename=${filename}`);
 
   if (!response.ok) {
     throw new Error("Error checking file processing status");

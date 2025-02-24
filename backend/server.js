@@ -8,7 +8,7 @@ const { preprocessingDir, getDatasetPath } = require("./config/paths");
 const { exec } = require("child_process");
 
 const app = express();
-const PORT = 3000;
+const PORT = 8000;
 
 app.use(cors());
 
@@ -75,7 +75,7 @@ function parseCSVFileReduced(filePath) {
   });
 }
 
-app.get("/data/options", (req, res) => {
+app.get("/api/data/options", (req, res) => {
   const directoryPath = path.join(preprocessingDir, "source");
 
   fs.readdir(directoryPath, (err, files) => {
@@ -99,7 +99,7 @@ app.get("/data/options", (req, res) => {
   });
 });
 
-app.get("/data/reduced/:type/:file", async (req, res) => {
+app.get("/api/data/reduced/:type/:file", async (req, res) => {
   try {
     const { type, file } = req.params;
 
@@ -133,7 +133,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.post("/add", upload.single("file"), (req, res) => {
+app.post("/api/add", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
@@ -185,7 +185,7 @@ app.post("/add", upload.single("file"), (req, res) => {
   });
 });
 
-app.get("/data/status", (req, res) => {
+app.get("/api/data/status", (req, res) => {
   const { filename } = req.query;
 
   if (!filename) {
@@ -196,6 +196,6 @@ app.get("/data/status", (req, res) => {
   res.json({ isProcessed });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server is running on https://0.0.0.0:${PORT}`);
 });

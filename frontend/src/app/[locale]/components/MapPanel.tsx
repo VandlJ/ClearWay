@@ -17,13 +17,17 @@ interface GPSData {
   size: number;
 }
 
-// Dynamically import MapContainer and TileLayer to avoid SSR issues
+// Instead of creating our own Leaflet type, we'll use the actual Leaflet library
+// We'll only define the L variable with the type "any" here for linting purposes
+// but we'll use the actual Leaflet module when it's imported
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
 export default function MapPanel() {
+  // Using any here is acceptable because we're dealing with a third-party library
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [L, setL] = useState<any>(null);
   const { selectedDataset, vehicleWidth, isMinMode } = useDataset();
 
@@ -72,8 +76,8 @@ export default function MapPanel() {
     setNumber(parseInt(vehicleWidth));
   }, [vehicleWidth]);
 
-const generateIcon = (width: number) => {
-    let className = "custom-marker";
+  const generateIcon = (width: number) => {
+    const className = "custom-marker";
     let dotClass = "";
 
     if (width - number < 0) {
@@ -87,7 +91,7 @@ const generateIcon = (width: number) => {
       dotClass = "bg-yellow-400 border-yellow-700";
     }
 
-    return L.divIcon({
+    return L?.divIcon({
       className,
       html: `<div style="position: relative; left: 0px; top: 0px;">
                <div class='w-2.5 h-2.5 rounded-full ${dotClass} border shadow-sm'></div>
@@ -95,7 +99,7 @@ const generateIcon = (width: number) => {
       iconSize: [10, 10],
       iconAnchor: [5, 5]
     });
-};
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;

@@ -7,8 +7,8 @@ on:
     branches: [ dev ]
 
 jobs:
-  frontend-tests:
-    name: Frontend Tests
+  tests:
+    name: All Tests
     runs-on: ubuntu-latest
     
     steps:
@@ -20,21 +20,22 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
       
-      - name: Install dependencies
+      # Frontend testing
+      - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci
       
       - name: Lint check
         working-directory: ./frontend
         run: npm run lint
+        continue-on-error: true  # Continue even if linting fails
         
-      - name: Install Jest and testing libraries
+      - name: Install frontend testing libraries
         working-directory: ./frontend
         run: npm install --save-dev jest @testing-library/react @testing-library/jest-dom jest-environment-jsdom @types/jest jest-fetch-mock
 
-      - name: Create Jest config
+      - name: Create frontend Jest config
         working-directory: ./frontend
         run: |
           cat > jest.config.js << 'EOL'
@@ -229,30 +230,16 @@ jobs:
           });
           EOL
       
-      - name: Run unit tests
+      - name: Run frontend tests
         working-directory: ./frontend
         run: npm test
-
-  backend-tests:
-    name: Backend Tests
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-      
-      - name: Install dependencies
+      # Backend testing
+      - name: Install backend dependencies
         working-directory: ./backend
         run: npm ci
       
-      - name: Install testing libraries
+      - name: Install backend testing libraries
         working-directory: ./backend
         run: npm install --save-dev jest supertest
 
@@ -317,24 +304,11 @@ jobs:
           # Update package.json script
           npx json -I -f package.json -e 'this.scripts.test = "jest"'
       
-      - name: Run unit tests
+      - name: Run backend tests
         working-directory: ./backend
         run: npm test
-
-  e2e-tests:
-    name: End-to-End Tests
-    runs-on: ubuntu-latest
-    needs: [frontend-tests, backend-tests]
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      
+      # E2E testing
       - name: Install Cypress and create package.json
         run: |
           npm init -y

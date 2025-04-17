@@ -50,6 +50,7 @@
     dest: "{{ new_deployment_dir.path }}/frontend/"
     rsync_opts:
       - "--exclude=node_modules"
+      - "--exclude=.next"
   become: yes
   become_user: "{{ deploy_user }}"
 
@@ -65,7 +66,14 @@
 - name: Install frontend dependencies
   ansible.builtin.npm:
     path: "{{ new_deployment_dir.path }}/frontend"
-    production: yes
+    production: no  # Changed to include dev dependencies for build
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Build Next.js application
+  ansible.builtin.shell: npm run build
+  args:
+    chdir: "{{ new_deployment_dir.path }}/frontend"
   become: yes
   become_user: "{{ deploy_user }}"
 

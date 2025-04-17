@@ -9,32 +9,23 @@
   become: yes
   register: new_deployment_dir
 
-- name: Copy frontend files
-  ansible.builtin.copy:
-    src: "{{ item.src }}"
-    dest: "{{ new_deployment_dir.path }}/frontend/{{ item.dest }}"
-    owner: "{{ deploy_user }}"
-    group: "{{ deploy_user }}"
-    mode: '0644'
-  with_items:
-    - { src: 'frontend/.next/', dest: '.next/' }
-    - { src: 'frontend/public/', dest: 'public/' }
-    - { src: 'frontend/next.config.ts', dest: 'next.config.ts' }
-    - { src: 'frontend/package.json', dest: 'package.json' }
+- name: Synchronize frontend files
+  ansible.builtin.synchronize:
+    src: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/frontend/"
+    dest: "{{ new_deployment_dir.path }}/frontend/"
+    rsync_opts:
+      - "--exclude=node_modules"
   become: yes
+  become_user: "{{ deploy_user }}"
 
-- name: Copy backend files
-  ansible.builtin.copy:
-    src: "{{ item.src }}"
-    dest: "{{ new_deployment_dir.path }}/backend/{{ item.dest }}"
-    owner: "{{ deploy_user }}"
-    group: "{{ deploy_user }}"
-    mode: '0644'
-  with_items:
-    - { src: 'backend/server.js', dest: 'server.js' }
-    - { src: 'backend/package.json', dest: 'package.json' }
-    - { src: 'backend/config/', dest: 'config/' }
+- name: Synchronize backend files
+  ansible.builtin.synchronize:
+    src: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/backend/"
+    dest: "{{ new_deployment_dir.path }}/backend/"
+    rsync_opts:
+      - "--exclude=node_modules"
   become: yes
+  become_user: "{{ deploy_user }}"
 
 - name: Install frontend dependencies
   ansible.builtin.npm:

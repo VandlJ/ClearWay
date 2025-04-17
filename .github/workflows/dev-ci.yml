@@ -462,11 +462,25 @@ jobs:
           name: clearway-deployment
           path: deployment
       
-      - name: Extract deployment package
+      - name: Extract deployment package and prepare directories
         run: |
-          mkdir -p frontend backend
-          cp -r deployment/frontend/* frontend/
+          # Create needed directories
+          mkdir -p frontend/.next
+          mkdir -p backend
+          
+          # Copy frontend files
+          cp -r deployment/frontend/.next/* frontend/.next/
+          cp -r deployment/frontend/public frontend/
+          cp deployment/frontend/next.config.ts frontend/
+          cp deployment/frontend/package.json frontend/
+          
+          # Copy backend files
           cp -r deployment/backend/* backend/
+          
+          # Print directory structure for debugging
+          echo "Directory structure:"
+          find frontend -type f | sort
+          find backend -type f | sort
       
       - name: Setup SSH key
         run: |
@@ -477,7 +491,12 @@ jobs:
       
       - name: Install Python dependencies for Ansible
         run: |
-          pip install ansible
+          pip install ansible paramiko
+      
+      - name: Install rsync
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync
 
       - name: Create Ansible inventory
         run: |

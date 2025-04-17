@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    name: All Tests
+    name: Test Application
     runs-on: ubuntu-latest
     
     steps:
@@ -366,3 +366,80 @@ jobs:
           echo "Note: This pipeline is set to continue on errors to provide maximum feedback."
           echo "Check individual step logs for detailed error information."
         if: always()  # Always run this step
+
+  build:
+    name: Build Application
+    needs: tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      # Build Frontend
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+      
+      - name: Archive frontend build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: |
+            frontend/.next
+            frontend/public
+            frontend/next.config.ts
+            frontend/package.json
+          retention-days: 7
+      
+      # Build Backend
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Create backend production package
+        working-directory: ./backend
+        run: |
+          mkdir -p dist
+          cp server.js dist/
+          cp package.json dist/
+          cp -r config dist/
+      
+      - name: Archive backend build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: |
+            backend/dist
+          retention-days: 7
+      
+      # Create deployment package with both frontend and backend
+      - name: Create full deployment package
+        run: |
+          mkdir -p deployment
+          cp -r backend/dist deployment/backend
+          mkdir -p deployment/frontend
+          cp -r frontend/.next deployment/frontend/
+          cp -r frontend/public deployment/frontend/
+          cp frontend/next.config.ts deployment/frontend/
+          cp frontend/package.json deployment/frontend/
+          echo "Build completed on $(date)" > deployment/build-info.txt
+          echo "Branch: ${{ github.ref }}" >> deployment/build-info.txt
+          echo "Commit: ${{ github.sha }}" >> deployment/build-info.txt
+      
+      - name: Archive full deployment package
+        uses: actions/upload-artifact@v4
+        with:
+          name: clearway-deployment
+          path: deployment
+          retention-days: 7

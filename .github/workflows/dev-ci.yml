@@ -413,7 +413,9 @@ jobs:
           mkdir -p dist
           cp server.js dist/
           cp package.json dist/
-          cp -r config dist/
+          if [ -d "config" ]; then
+            cp -r config dist/
+          fi
       
       - name: Archive backend build artifacts
         uses: actions/upload-artifact@v4

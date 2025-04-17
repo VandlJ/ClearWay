@@ -467,6 +467,46 @@ jobs:
           echo "Deployment package structure:"
           find deployment -type f | sort
       
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
+      
+      - name: Emergency disk space cleanup
+        run: |
+          echo "Running emergency disk space cleanup on VM..."
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+          set -e
+          
+          echo "Current disk space usage:"
+          df -h
+          
+          echo "Cleaning npm cache..."
+          npm cache clean --force || true
+          
+          echo "Removing old build artifacts and deployments..."
+          find ~/deployments -maxdepth 1 -type d -name 'clearway-*' | sort -r | tail -n +3 | xargs rm -rf || true
+          
+          echo "Removing temporary and cache files..."
+          find /tmp -type d -name "npm-*" -exec rm -rf {} + 2>/dev/null || true
+          find /tmp -name "*.tmp" -delete 2>/dev/null || true
+          find ~/.npm -type d -name "_cacache" -exec rm -rf {} + 2>/dev/null || true
+          
+          echo "Removing old log files..."
+          find ~/.pm2/logs -type f -name "*.log" -delete 2>/dev/null || true
+          
+          echo "Removing old packages..."
+          if command -v apt-get &>/dev/null; then
+            apt-get clean || true
+            apt-get autoremove -y || true
+          fi
+          
+          echo "After cleanup disk space usage:"
+          df -h
+          EOF
+      
       - name: Extract deployment package and prepare directories
         run: |
           # Create needed directories
@@ -512,13 +552,6 @@ jobs:
           echo "Prepared directory structure:"
           find frontend -type f | sort
           find backend -type f | sort
-      
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
       
       - name: Install Python dependencies for Ansible
         run: |

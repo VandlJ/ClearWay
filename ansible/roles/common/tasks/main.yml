@@ -1,0 +1,63 @@
+---
+- name: Update and upgrade packages
+  ansible.builtin.apt:
+    update_cache: yes
+    upgrade: yes
+  become: yes
+
+- name: Install required system packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - wget
+    - curl
+    - git
+    - ca-certificates
+    - gnupg
+    - lsb-release
+    - python3-pip
+  become: yes
+
+- name: Setup Node.js repository
+  ansible.builtin.shell: |
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ nodejs_version }} nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+  args:
+    creates: /etc/apt/sources.list.d/nodesource.list
+  become: yes
+
+- name: Install Node.js
+  ansible.builtin.apt:
+    name: nodejs
+    update_cache: yes
+  become: yes
+
+- name: Install PM2 globally
+  ansible.builtin.npm:
+    name: pm2
+    global: yes
+  become: yes
+
+- name: Create deploy user if required
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    shell: /bin/bash
+    create_home: yes
+  when: create_deploy_user
+  become: yes
+
+- name: Create app directories
+  ansible.builtin.file:
+    path: "{{ deploy_user_home }}/deployments"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'
+  become: yes
+
+- name: Setup PM2 to start on boot
+  ansible.builtin.shell: |
+    pm2 startup systemd -u {{ deploy_user }} --hp {{ deploy_user_home }}
+  become: yes

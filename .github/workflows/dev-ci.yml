@@ -445,3 +445,59 @@ jobs:
           name: clearway-deployment
           path: deployment
           retention-days: 7
+
+  deploy:
+    name: Deploy to VM with Ansible
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'  # Only deploy on pushes to dev branch
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download deployment package
+        uses: actions/download-artifact@v4
+        with:
+          name: clearway-deployment
+          path: deployment
+      
+      - name: Extract deployment package
+        run: |
+          mkdir -p frontend backend
+          cp -r deployment/frontend/* frontend/
+          cp -r deployment/backend/* backend/
+      
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
+      
+      - name: Install Python dependencies for Ansible
+        run: |
+          pip install ansible
+
+      - name: Create Ansible inventory
+        run: |
+          sed -e "s|{{ ansible_host }}|${{ secrets.VM_IP }}|" \
+              -e "s|{{ ansible_user }}|${{ secrets.VM_USER }}|" \
+              ansible/inventory.j2 > ansible/inventory
+      
+      - name: Run Ansible playbook
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+            -i ansible/inventory \
+            --private-key=~/.ssh/id_rsa \
+            -e "app_name=clearway" \
+            -e "deploy_user=${{ secrets.VM_USER }}" \
+            ansible/site.yml
+      
+      - name: Verify deployment
+        run: |
+          echo "Checking if services are running..."
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} "ps aux | grep node || true"
+          echo "Listing PM2 processes..."
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} "pm2 list || true"
+          echo "Deployment completed successfully!"

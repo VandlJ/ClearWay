@@ -1,0 +1,12 @@
+---
+- name: Setup server environment
+  hosts: clearway_server
+  gather_facts: yes
+  roles:
+    - common
+
+- name: Deploy ClearWay application
+  hosts: clearway_server
+  gather_facts: yes
+  roles:
+    - deploy

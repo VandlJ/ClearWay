@@ -1,0 +1,5 @@
+---
+- name: Restart Node services
+  ansible.builtin.command: pm2 reload all
+  become: true
+  become_user: "{{ deploy_user }}"

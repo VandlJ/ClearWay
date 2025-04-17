@@ -1,0 +1,77 @@
+---
+- name: Create deployment directory
+  ansible.builtin.file:
+    path: "{{ app_base_dir }}/{{ app_name }}-{{ ansible_date_time.date }}-{{ ansible_date_time.time | regex_replace(':', '') }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'
+  become: yes
+  register: new_deployment_dir
+
+- name: Copy frontend files
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ new_deployment_dir.path }}/frontend/{{ item.dest }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0644'
+  with_items:
+    - { src: 'frontend/.next/', dest: '.next/' }
+    - { src: 'frontend/public/', dest: 'public/' }
+    - { src: 'frontend/next.config.ts', dest: 'next.config.ts' }
+    - { src: 'frontend/package.json', dest: 'package.json' }
+  become: yes
+
+- name: Copy backend files
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ new_deployment_dir.path }}/backend/{{ item.dest }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0644'
+  with_items:
+    - { src: 'backend/server.js', dest: 'server.js' }
+    - { src: 'backend/package.json', dest: 'package.json' }
+    - { src: 'backend/config/', dest: 'config/' }
+  become: yes
+
+- name: Install frontend dependencies
+  ansible.builtin.npm:
+    path: "{{ new_deployment_dir.path }}/frontend"
+    production: yes
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Install backend dependencies
+  ansible.builtin.npm:
+    path: "{{ new_deployment_dir.path }}/backend"
+    production: yes
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Update symbolic link to latest deployment
+  ansible.builtin.file:
+    src: "{{ new_deployment_dir.path }}"
+    dest: "{{ app_base_dir }}/latest"
+    state: link
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+  become: yes
+  notify:
+    - Restart backend service
+    - Restart frontend service
+    - Save PM2 config
+
+- name: Create ecosystem.config.js
+  ansible.builtin.template:
+    src: ecosystem.config.js.j2
+    dest: "{{ app_base_dir }}/ecosystem.config.js"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0644'
+  become: yes
+  notify:
+    - Restart backend service
+    - Restart frontend service
+    - Save PM2 config

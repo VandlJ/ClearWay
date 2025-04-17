@@ -24,3 +24,11 @@ It will save you a lot of time while writing/editing/debugging tests.
 
 Also you need to have installed dependencies - since the playwright is needed only for testing (and not deployment), it is
 again just devDependency.
+
+## Lint
+
+- we can use the default lint provided by next that can be run via
+
+```cmd
+npm run lint
+```

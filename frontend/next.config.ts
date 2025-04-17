@@ -6,10 +6,8 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig = {
   /* config options here */
   output: 'standalone' as const, // Using 'as const' to fix type issue
-  experimental: {
-    // This ensures Next.js binds to all network interfaces when in production
-    serverComponentsExternalPackages: []
-  },
+  // Updated: serverExternalPackages instead of experimental.serverComponentsExternalPackages
+  serverExternalPackages: [],
   // The server configuration needs to be defined differently:
   // hostname and port are set via environment variables or startup parameters
   env: {

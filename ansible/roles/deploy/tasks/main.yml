@@ -63,6 +63,53 @@
   become: yes
   become_user: "{{ deploy_user }}"
 
+- name: Check available disk space
+  ansible.builtin.shell: df -h
+  register: disk_space
+  become: yes
+
+- name: Display disk space information
+  ansible.builtin.debug:
+    var: disk_space.stdout_lines
+
+- name: Clean up disk space if needed
+  ansible.builtin.shell: |
+    # Remove old npm caches
+    npm cache clean --force
+    
+    # Remove old deployment directories keeping the 2 most recent
+    cd {{ app_base_dir }}
+    ls -dt clearway-* | tail -n +3 | xargs -r rm -rf
+    
+    # Clear any temporary files
+    rm -rf /tmp/npm-*
+    rm -rf /tmp/frontend-sync /tmp/backend-sync
+    
+    # Clear old logs
+    find ~/.pm2/logs -type f -name "*.log" -mtime +7 -delete
+    
+    # Clean any Docker resources if Docker is installed
+    if command -v docker &> /dev/null; then
+        docker system prune -af --volumes
+    fi
+    
+    # Clean apt cache if using Ubuntu/Debian
+    if command -v apt-get &> /dev/null; then
+        apt-get clean
+        apt-get autoremove -y
+    fi
+    
+    # Check space again
+    df -h /
+  args:
+    executable: /bin/bash
+  register: cleanup_result
+  become: yes
+
+- name: Display disk space after cleanup
+  ansible.builtin.debug:
+    var: cleanup_result.stdout_lines
+
 - name: Install frontend dependencies
   ansible.builtin.npm:
     path: "{{ new_deployment_dir.path }}/frontend"

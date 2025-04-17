@@ -6,7 +6,7 @@ import { useDataset } from '@/app/providers/DatasetContextProvider';
 import { useTranslations } from 'next-intl';
 
 export default function FileUpload() {
-  const t = useTranslations("pages.map.sidePanel.fileUpload");
+  const t = useTranslations("pages.map.sidePanel.dataset.upload");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -56,16 +56,16 @@ export default function FileUpload() {
         htmlFor="file-upload"
         className="bg-blue-500 text-white hover:bg-blue-600 transform transition-transform duration-400 hover:-translate-y-1 hover:shadow-lg px-4 py-2 w-full rounded-lg shadow-lg flex items-center justify-center cursor-pointer"
       >
-        <span>{t("selectButton")}</span>
+        <span>{t("chooseButton")}</span>
       </label>
-      <div className="flex items-center space-x-2 mt-2">
-        <p className="text-sm text-black">{file ? file.name : t("messages.noFileChosen")}</p>
+      <div className="flex flex-col items-center mt-2">
+        <p className="text-sm text-black text-center">{file ? file.name : t("messages.noFileChosen")}</p>
         {file && (
           <button
-            onClick={handleClearFile}
-            className="text-red-500 text-sm hover:underline"
+        onClick={handleClearFile}
+        className="text-red-500 text-sm hover:underline mt-1"
           >
-            {t("clearButton")}
+        {t("clearButton")}
           </button>
         )}
       </div>

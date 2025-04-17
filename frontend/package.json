@@ -6,6 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "test:e2e:playwright": "npx playwright test",
+    "test:e2e:playwright:ui": "npx playwright test --ui",
     "lint": "next lint"
   },
   "dependencies": {
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.52.0",
     "@types/leaflet": "^1.9.16",
     "@types/node": "20.17.30",
     "@types/react": "19.1.2",

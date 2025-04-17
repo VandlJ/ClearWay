@@ -15,8 +15,8 @@ module.exports = {
     {
       name: 'clearway-frontend',
       cwd: '{{ app_base_dir }}/latest/frontend',
-      script: 'node',
-      args: '.next/server/app/server.js',
+      script: 'npm',
+      args: 'start',
       env: {
         NODE_ENV: 'production',
         PORT: {{ frontend_port }},

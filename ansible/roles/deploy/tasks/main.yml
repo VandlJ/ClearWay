@@ -29,7 +29,7 @@
       cp -r {{ lookup('env', 'GITHUB_WORKSPACE') }}/frontend/* /tmp/frontend-sync/
     else
       mkdir -p /tmp/frontend-sync
-      echo '{"name":"clearway-frontend","scripts":{"start":"next start"}}' > /tmp/frontend-sync/package.json
+      echo '{"name":"clearway-frontend","scripts":{"start":"next start", "build": "next build"}}' > /tmp/frontend-sync/package.json
     fi
   delegate_to: localhost
 
@@ -66,7 +66,17 @@
 - name: Install frontend dependencies
   ansible.builtin.npm:
     path: "{{ new_deployment_dir.path }}/frontend"
-    production: no  # Changed to include dev dependencies for build
+    production: no  # Include dev dependencies for build
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Ensure build script exists in package.json
+  ansible.builtin.lineinfile:
+    path: "{{ new_deployment_dir.path }}/frontend/package.json"
+    regexp: '"build":'
+    line: '    "build": "next build",'
+    insertafter: '"scripts": {'
+    state: present
   become: yes
   become_user: "{{ deploy_user }}"
 
@@ -76,6 +86,18 @@
     chdir: "{{ new_deployment_dir.path }}/frontend"
   become: yes
   become_user: "{{ deploy_user }}"
+
+- name: Verify Next.js build succeeded
+  ansible.builtin.stat:
+    path: "{{ new_deployment_dir.path }}/frontend/.next/server"
+  register: nextjs_build
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Fail if Next.js build was unsuccessful
+  ansible.builtin.fail:
+    msg: "Next.js build failed - .next/server directory not found"
+  when: not nextjs_build.stat.exists
 
 - name: Install backend dependencies
   ansible.builtin.npm:

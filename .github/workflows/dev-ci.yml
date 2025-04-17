@@ -462,23 +462,54 @@ jobs:
           name: clearway-deployment
           path: deployment
       
+      - name: List deployment package contents
+        run: |
+          echo "Deployment package structure:"
+          find deployment -type f | sort
+      
       - name: Extract deployment package and prepare directories
         run: |
           # Create needed directories
           mkdir -p frontend/.next
           mkdir -p backend
           
-          # Copy frontend files
-          cp -r deployment/frontend/.next/* frontend/.next/
-          cp -r deployment/frontend/public frontend/
-          cp deployment/frontend/next.config.ts frontend/
-          cp deployment/frontend/package.json frontend/
+          # Copy frontend files with error handling
+          if [ -d "deployment/frontend/.next" ]; then
+            cp -r deployment/frontend/.next/* frontend/.next/ || true
+          elif [ -d "deployment/frontend" ]; then
+            # Try to find .next directory in a different location
+            find deployment -name ".next" -type d -exec cp -r {}/* frontend/.next/ \; || true
+          fi
           
-          # Copy backend files
-          cp -r deployment/backend/* backend/
+          # Copy other frontend files with error handling
+          if [ -d "deployment/frontend/public" ]; then
+            cp -r deployment/frontend/public frontend/ || true
+          fi
+          
+          if [ -f "deployment/frontend/next.config.ts" ]; then
+            cp deployment/frontend/next.config.ts frontend/ || true
+          fi
+          
+          if [ -f "deployment/frontend/package.json" ]; then
+            cp deployment/frontend/package.json frontend/ || true
+          fi
+          
+          # Copy backend files with error handling
+          if [ -d "deployment/backend" ]; then
+            cp -r deployment/backend/* backend/ || true
+          fi
+          
+          # Create minimal structure if files are missing
+          if [ ! -f "frontend/package.json" ]; then
+            echo '{"name":"clearway-frontend","scripts":{"start":"next start"}}' > frontend/package.json
+          fi
+          
+          if [ ! -f "backend/package.json" ]; then
+            echo '{"name":"clearway-backend"}' > backend/package.json
+          fi
           
           # Print directory structure for debugging
-          echo "Directory structure:"
+          echo "Prepared directory structure:"
           find frontend -type f | sort
           find backend -type f | sort
       

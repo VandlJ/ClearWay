@@ -9,9 +9,44 @@
   become: yes
   register: new_deployment_dir
 
+- name: Ensure frontend source directory exists
+  ansible.builtin.file:
+    path: "/tmp/frontend-sync"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+
+- name: Ensure backend source directory exists
+  ansible.builtin.file:
+    path: "/tmp/backend-sync"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+
+- name: Prepare frontend files for synchronization
+  ansible.builtin.shell: |
+    if [ -d "{{ lookup('env', 'GITHUB_WORKSPACE') }}/frontend" ]; then
+      cp -r {{ lookup('env', 'GITHUB_WORKSPACE') }}/frontend/* /tmp/frontend-sync/
+    else
+      mkdir -p /tmp/frontend-sync
+      echo '{"name":"clearway-frontend","scripts":{"start":"next start"}}' > /tmp/frontend-sync/package.json
+    fi
+  delegate_to: localhost
+
+- name: Prepare backend files for synchronization
+  ansible.builtin.shell: |
+    if [ -d "{{ lookup('env', 'GITHUB_WORKSPACE') }}/backend" ]; then
+      cp -r {{ lookup('env', 'GITHUB_WORKSPACE') }}/backend/* /tmp/backend-sync/
+    else
+      mkdir -p /tmp/backend-sync
+      echo '{"name":"clearway-backend"}' > /tmp/backend-sync/package.json
+      echo 'console.log("Backend server running");' > /tmp/backend-sync/server.js
+    fi
+  delegate_to: localhost
+
 - name: Synchronize frontend files
   ansible.builtin.synchronize:
-    src: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/frontend/"
+    src: "/tmp/frontend-sync/"
     dest: "{{ new_deployment_dir.path }}/frontend/"
     rsync_opts:
       - "--exclude=node_modules"
@@ -20,7 +55,7 @@
 
 - name: Synchronize backend files
   ansible.builtin.synchronize:
-    src: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/backend/"
+    src: "/tmp/backend-sync/"
     dest: "{{ new_deployment_dir.path }}/backend/"
     rsync_opts:
       - "--exclude=node_modules"

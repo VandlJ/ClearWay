@@ -2,7 +2,7 @@ version: '3'
 
 services:
   frontend:
-    image: {{ frontend_image }}
+    image: "{{ frontend_image | default(docker_username + '/clearway-frontend:latest') }}"
     container_name: clearway-frontend
     restart: unless-stopped
     networks:
@@ -11,16 +11,16 @@ services:
       - backend
 
   backend:
-    image: {{ backend_image }}
+    image: "{{ backend_image | default(docker_username + '/clearway-backend:latest') }}"
     container_name: clearway-backend
     restart: unless-stopped
     volumes:
-      - "{{ new_deployment_dir.path }}/data:/app/data"
+      - "./data:/app/data"
     networks:
       - app-network
 
   nginx:
-    image: {{ nginx_image }}
+    image: "{{ nginx_image | default(docker_username + '/clearway-nginx:latest') }}"
     container_name: clearway-nginx
     restart: unless-stopped
     ports:

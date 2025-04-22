@@ -1,4 +1,9 @@
 ---
+- name: Set default timestamp if app_version is empty
+  ansible.builtin.set_fact:
+    app_version: "{{ ansible_date_time.date }}-{{ ansible_date_time.time | regex_replace(':', '') }}"
+  when: app_version is not defined or app_version == ""
+
 - name: Create deployment directory
   ansible.builtin.file:
     path: "{{ app_base_dir }}/{{ app_name }}-{{ app_version }}"

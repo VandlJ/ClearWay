@@ -1,19 +1,12 @@
 ---
-- name: Restart frontend service
-  ansible.builtin.shell: pm2 restart clearway-frontend || pm2 start 'cd frontend && npm start' --name clearway-frontend
-  args:
-    chdir: "{{ app_base_dir }}/latest"
-  become: true
-  become_user: "{{ deploy_user }}"
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  become: yes
 
-- name: Restart backend service
-  ansible.builtin.shell: pm2 restart clearway-backend || pm2 start backend/server.js --name clearway-backend
-  args:
-    chdir: "{{ app_base_dir }}/latest"
-  become: true
-  become_user: "{{ deploy_user }}"
-
-- name: Save PM2 config
-  ansible.builtin.shell: pm2 save
-  become: true
-  become_user: "{{ deploy_user }}"
+- name: Restart Docker service
+  ansible.builtin.systemd:
+    name: clearway-docker
+    state: restarted
+    enabled: yes
+  become: yes

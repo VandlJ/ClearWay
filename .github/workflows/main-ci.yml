@@ -31,159 +31,8 @@ jobs:
         working-directory: ./frontend
         run: npm run lint
         continue-on-error: true  # Continue even if linting fails
-        
-      - name: Install frontend testing libraries
-        working-directory: ./frontend
-        run: npm install --save-dev jest @testing-library/react @testing-library/jest-dom jest-environment-jsdom @types/jest jest-fetch-mock
-        continue-on-error: true  # Continue even if install fails
-
-      - name: Create frontend Jest config
-        working-directory: ./frontend
-        run: |
-          cat > jest.config.js << 'EOL'
-          module.exports = {
-            testEnvironment: 'jsdom',
-            testMatch: ['**/__tests__/dataService.test.js'],  // Only run the working test
-            setupFilesAfterEnv: ['<rootDir>/__tests__/setup.js'],
-            moduleNameMapper: {
-              '^@/(.*)$': '<rootDir>/src/$1',
-              '^leaflet$': '<rootDir>/__mocks__/leafletMock.js',
-              '\\.(css|less)$': '<rootDir>/__mocks__/styleMock.js',
-            },
-            transform: {
-              '^.+\\.(ts|tsx|js|jsx)$': ['babel-jest', { presets: ['next/babel'] }]
-            }
-          };
-          EOL
-          
-          # Add Jest script to package.json
-          npx json -I -f package.json -e 'this.scripts.test = "jest"'
-          
-          # Create test setup file
-          mkdir -p __tests__
-          cat > __tests__/setup.js << 'EOL'
-          import '@testing-library/jest-dom'
-          import { enableFetchMocks } from 'jest-fetch-mock'
-          
-          enableFetchMocks()
-          
-          # Mock next/dynamic
-          jest.mock('next/dynamic', () => () => {
-            const DynamicComponent = () => null;
-            DynamicComponent.displayName = 'LoadableComponent';
-            return DynamicComponent;
-          });
-          
-          # Mock localStorage
-          const localStorageMock = (function() {
-            let store = {};
-            return {
-              getItem: jest.fn(key => store[key] || null),
-              setItem: jest.fn((key, value) => {
-                store[key] = value.toString();
-              }),
-              clear: jest.fn(() => {
-                store = {};
-              }),
-              removeItem: jest.fn(key => {
-                delete store[key];
-              })
-            };
-          })();
-          
-          Object.defineProperty(window, 'localStorage', {
-            value: localStorageMock
-          });
-          EOL
-          
-          # Create mocks directory and mock files
-          mkdir -p __mocks__
-          
-          # Create leaflet mock
-          cat > __mocks__/leafletMock.js << 'EOL'
-          const L = {
-            map: jest.fn(() => ({
-              setView: jest.fn(),
-              remove: jest.fn()
-            })),
-            tileLayer: jest.fn(() => ({
-              addTo: jest.fn()
-            })),
-            marker: jest.fn(() => ({
-              addTo: jest.fn()
-            })),
-            divIcon: jest.fn(() => ({})),
-            icon: jest.fn(() => ({}))
-          };
-          
-          module.exports = L;
-          EOL
-          
-          # Create style mock
-          cat > __mocks__/styleMock.js << 'EOL'
-          module.exports = {};
-          EOL
-        continue-on-error: true  # Continue even if setup fails
-
-      - name: Create frontend tests
-        working-directory: ./frontend
-        run: |
-          # Create dataService test (this test works)
-          cat > __tests__/dataService.test.js << 'EOL'
-          import { fetchGPSDataMin, fetchGPSDataMax, fetchOptions, sendFileToBackend } from '@/service/dataService';
-          import fetchMock from 'jest-fetch-mock';
-          
-          beforeEach(() => {
-            fetchMock.resetMocks();
-          });
-          
-          describe('Data Service Tests', () => {
-            test('fetchGPSDataMin fetches data successfully', async () => {
-              const mockData = [{ gps: { n: 49.7475, e: 13.3776 }, size: 300 }];
-              fetchMock.mockResponseOnce(JSON.stringify(mockData));
-              
-              const result = await fetchGPSDataMin('testDataset');
-              
-              expect(fetchMock).toHaveBeenCalledWith('https://storagegrid.eu/api/data/reduced/min/testDataset');
-              expect(result).toEqual(mockData);
-            });
-            
-            test('fetchGPSDataMax fetches data successfully', async () => {
-              const mockData = [{ gps: { n: 49.7475, e: 13.3776 }, size: 400 }];
-              fetchMock.mockResponseOnce(JSON.stringify(mockData));
-              
-              const result = await fetchGPSDataMax('testDataset');
-              
-              expect(fetchMock).toHaveBeenCalledWith('https://storagegrid.eu/api/data/reduced/max/testDataset');
-              expect(result).toEqual(mockData);
-            });
-            
-            test('fetchOptions returns available datasets', async () => {
-              const mockOptions = ['dataset1', 'dataset2'];
-              fetchMock.mockResponseOnce(JSON.stringify(mockOptions));
-              
-              const result = await fetchOptions();
-              
-              expect(fetchMock).toHaveBeenCalledWith('https://storagegrid.eu/api/data/options');
-              expect(result).toEqual(mockOptions);
-            });
-            
-            test('sendFileToBackend uploads file correctly', async () => {
-              const mockResponse = { success: true };
-              fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
-              
-              const file = new File(['test content'], 'test.csv', { type: 'text/csv' });
-              const result = await sendFileToBackend(file);
-              
-              expect(fetchMock).toHaveBeenCalledWith('https://storagegrid.eu/api/add', expect.any(Object));
-              expect(result).toEqual(mockResponse);
-            });
-          });
-          EOL
-          
-          # We're not creating the problematic DatasetContext test
-        continue-on-error: true  # Continue even if test creation fails
       
+      # Run frontend tests
       - name: Run frontend tests
         working-directory: ./frontend
         run: npm test
@@ -195,170 +44,11 @@ jobs:
         run: npm ci
         continue-on-error: true  # Continue even if npm install fails
       
-      - name: Install backend testing libraries
-        working-directory: ./backend
-        run: npm install --save-dev jest supertest
-        continue-on-error: true  # Continue even if install fails
-
-      - name: Create backend tests
-        working-directory: ./backend
-        run: |
-          mkdir -p __tests__
-          cat > __tests__/server.test.js << 'EOL'
-          const request = require('supertest');
-          const express = require('express');
-          const cors = require('cors');
-          
-          # Create a simplified version of your actual server for testing
-          const app = express();
-          app.use(cors());
-          app.use(express.json());
-          
-          # Mock endpoints based on your actual backend functionality
-          app.get('/api/data/options', (req, res) => {
-            res.json(['dataset1', 'dataset2']);
-          });
-          
-          app.get('/api/data/reduced/min/:dataset', (req, res) => {
-            const { dataset } = req.params;
-            res.json([
-              { gps: { n: 49.7475, e: 13.3776 }, size: 300 }
-            ]);
-          });
-          
-          app.get('/api/data/reduced/max/:dataset', (req, res) => {
-            const { dataset } = req.params;
-            res.json([
-              { gps: { n: 49.7475, e: 13.3776 }, size: 400 }
-            ]);
-          });
-          
-          describe('API Endpoints', () => {
-            it('GET /api/data/options returns available datasets', async () => {
-              const response = await request(app).get('/api/data/options');
-              expect(response.statusCode).toBe(200);
-              expect(response.body).toEqual(['dataset1', 'dataset2']);
-            });
-            
-            it('GET /api/data/reduced/min/:dataset returns min GPS data', async () => {
-              const response = await request(app).get('/api/data/reduced/min/test');
-              expect(response.statusCode).toBe(200);
-              expect(response.body).toEqual([
-                { gps: { n: 49.7475, e: 13.3776 }, size: 300 }
-              ]);
-            });
-            
-            it('GET /api/data/reduced/max/:dataset returns max GPS data', async () => {
-              const response = await request(app).get('/api/data/reduced/max/test');
-              expect(response.statusCode).toBe(200);
-              expect(response.body).toEqual([
-                { gps: { n: 49.7475, e: 13.3776 }, size: 400 }
-              ]);
-            });
-          });
-          EOL
-          
-          # Update package.json script
-          npx json -I -f package.json -e 'this.scripts.test = "jest"'
-        continue-on-error: true  # Continue even if test creation fails
-      
+      # Run backend tests
       - name: Run backend tests
         working-directory: ./backend
         run: npm test
         continue-on-error: true  # Continue even if tests fail
-      
-      # E2E testing
-      - name: Install Cypress and create package.json
-        run: |
-          npm init -y
-          npm install cypress --save-dev
-        continue-on-error: true  # Continue even if Cypress install fails
-      
-      - name: Create Cypress tests
-        run: |
-          mkdir -p cypress/e2e cypress/fixtures
-          
-          # Create Cypress config
-          cat > cypress.config.js << 'EOL'
-          const { defineConfig } = require('cypress');
-          
-          module.exports = defineConfig({
-            e2e: {
-              setupNodeEvents(on, config) {},
-              baseUrl: 'http://localhost:3000',
-            },
-          });
-          EOL
-          
-          # Create map tests
-          cat > cypress/e2e/map.cy.js << 'EOL'
-          describe('Map Page', () => {
-            beforeEach(() => {
-              // Mock API response for dataset options
-              cy.intercept('GET', 'https://storagegrid.eu/api/data/options', {
-                statusCode: 200,
-                body: ['dataset1', 'dataset2']
-              }).as('getOptions');
-              
-              // Mock API response for GPS data
-              cy.intercept('GET', 'https://storagegrid.eu/api/data/reduced/**', {
-                statusCode: 200,
-                body: [
-                  { gps: { n: 49.7475, e: 13.3776 }, size: 300 }
-                ]
-              }).as('getGPSData');
-              
-              // Visit the map page
-              cy.visit('/map');
-            });
-            
-            it('displays the map component', () => {
-              // Check if map is rendered
-              cy.get('.leaflet-container').should('exist');
-            });
-            
-            it('shows dataset selection dropdown', () => {
-              cy.wait('@getOptions');
-              cy.get('select').should('exist');
-              cy.get('select option').should('have.length.at.least', 2);
-            });
-            
-            it('allows changing vehicle width', () => {
-              const testWidth = '250';
-              cy.get('input[type="number"]').clear().type(testWidth);
-              cy.get('input[type="number"]').should('have.value', testWidth);
-            });
-          });
-          EOL
-          
-          # Create navigation tests
-          cat > cypress/e2e/navigation.cy.js << 'EOL'
-          describe('Navigation', () => {
-            beforeEach(() => {
-              cy.visit('/');
-            });
-            
-            it('navigates to map page', () => {
-              cy.get('a[href*="map"]').click();
-              cy.url().should('include', '/map');
-            });
-            
-            it('changes locale', () => {
-              cy.get('[data-testid="locale-switch"]').click();
-              cy.get('[data-testid="locale-option-cs"]').click();
-              cy.url().should('include', '/cs');
-            });
-          });
-          EOL
-        continue-on-error: true  # Continue even if test creation fails
-      
-      - name: Run Cypress tests (mock mode)
-        run: |
-          echo "In a real CI environment, we would start the frontend and backend servers"
-          echo "Then run Cypress with: npx cypress run"
-          echo "For now, we'll just mark this step as passed"
-          exit 0  # Force the step to succeed
-        continue-on-error: true  # Continue even if Cypress validation fails
         
       - name: Generate test summary
         run: |
@@ -367,110 +57,108 @@ jobs:
           echo "Check individual step logs for detailed error information."
         if: always()  # Always run this step
 
-  build:
-    name: Build Application
+  build-and-push:
+    name: Build and Push Docker Images
     needs: tests
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only build and push on main branch
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Generate build timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+      
+      # Login to DockerHub
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       
-      # Build Frontend
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
-      
-      - name: Build frontend
-        working-directory: ./frontend
-        run: npm run build
-      
-      - name: Archive frontend build artifacts
-        uses: actions/upload-artifact@v4
+      # Build and push frontend image
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
         with:
-          name: frontend-build
-          path: |
-            frontend/.next
-            frontend/public
-            frontend/next.config.ts
-            frontend/package.json
-          retention-days: 7
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:${{ steps.timestamp.outputs.timestamp }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:latest
+          cache-to: type=inline
       
-      # Build Backend
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm ci
+      # Build and push backend image
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:${{ steps.timestamp.outputs.timestamp }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:latest
+          cache-to: type=inline
       
-      - name: Create backend production package
-        working-directory: ./backend
+      # Build and push nginx image
+      - name: Build and push nginx image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx-reverse-proxy
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:${{ steps.timestamp.outputs.timestamp }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:latest
+          cache-to: type=inline
+      
+      # Save deployment version information
+      - name: Create deployment version file
         run: |
-          mkdir -p dist
-          cp server.js dist/
-          cp package.json dist/
-          if [ -d "config" ]; then
-            cp -r config dist/
-          fi
+          mkdir -p ansible-vars
+          cat > ansible-vars/version.yml << EOF
+          ---
+          app_version: "${{ steps.timestamp.outputs.timestamp }}"
+          docker_registry: "docker.io"
+          docker_username: "${{ secrets.DOCKERHUB_USERNAME }}"
+          frontend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:${{ steps.timestamp.outputs.timestamp }}"
+          backend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:${{ steps.timestamp.outputs.timestamp }}"
+          nginx_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:${{ steps.timestamp.outputs.timestamp }}"
+          deployment_timestamp: "$(date)"
+          git_commit: "${{ github.sha }}"
+          git_branch: "${{ github.ref_name }}"
+          EOF
       
-      - name: Archive backend build artifacts
+      # Upload Ansible variables
+      - name: Upload Ansible variables
         uses: actions/upload-artifact@v4
         with:
-          name: backend-build
-          path: |
-            backend/dist
-          retention-days: 7
-      
-      # Create deployment package with both frontend and backend and docker-compose file
-      - name: Create full deployment package
-        run: |
-          mkdir -p deployment
-          cp -r backend/dist deployment/backend
-          mkdir -p deployment/frontend
-          cp -r frontend/.next deployment/frontend/
-          cp -r frontend/public deployment/frontend/
-          cp frontend/next.config.ts deployment/frontend/
-          cp frontend/package.json deployment/frontend/
-          cp docker-compose.yml deployment/
-          cp -r frontend/Dockerfile deployment/frontend/
-          cp -r backend/Dockerfile deployment/backend/
-          cp -r nginx-reverse-proxy deployment/nginx-reverse-proxy
-          cp -r preproccessing deployment/preproccessing
-          echo "Build completed on $(date)" > deployment/build-info.txt
-          echo "Branch: ${{ github.ref }}" >> deployment/build-info.txt
-          echo "Commit: ${{ github.sha }}" >> deployment/build-info.txt
-      
-      - name: Archive full deployment package
-        uses: actions/upload-artifact@v4
-        with:
-          name: clearway-deployment
-          path: deployment
+          name: ansible-vars
+          path: ansible-vars
           retention-days: 7
 
-  deploy-docker:
-    name: Deploy with Docker
-    needs: build
+  deploy-with-ansible:
+    name: Deploy with Ansible
+    needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only deploy on pushes to main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only deploy on main branch
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Download deployment package
+      - name: Download Ansible variables
         uses: actions/download-artifact@v4
         with:
-          name: clearway-deployment
-          path: deployment
-      
-      - name: List deployment package contents
-        run: |
-          echo "Deployment package structure:"
-          find deployment -type f | sort
+          name: ansible-vars
+          path: ansible-vars
       
       - name: Setup SSH key
         run: |
@@ -478,221 +166,95 @@ jobs:
           echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
-          
-          # Test SSH connection
-          echo "Testing SSH connection..."
-          if ! ssh -o StrictHostKeyChecking=no -o BatchMode=yes ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} "echo SSH connection successful"; then
-            echo "Error: Cannot connect to the server via SSH. Please ensure your VM_SSH_PRIVATE_KEY secret is correct and the key is already added to the VM's authorized_keys file."
-            echo "You can add your public key to authorized_keys with the following command:"
-            echo "cat ~/.ssh/id_rsa.pub | ssh user@vm-ip \"mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && cat >> ~/.ssh/authorized_keys\""
-            exit 1
-          fi
       
-      - name: Aggressive disk space cleanup
+      - name: Install Ansible
         run: |
-          echo "Running aggressive disk space cleanup on VM..."
-          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
-          set -e
-          
-          echo "Current disk space usage:"
-          df -h
-          
-          echo "Cleaning npm cache..."
-          npm cache clean --force || true
-          
-          echo "Stopping and removing all Docker containers and images..."
-          if command -v docker &>/dev/null; then
-            # Stop and remove all running containers
-            docker ps -a -q | xargs -r docker stop || true
-            docker ps -a -q | xargs -r docker rm || true
-            
-            # Remove all images
-            docker images -q | xargs -r docker rmi -f || true
-            
-            # Remove all volumes
-            docker volume ls -q | xargs -r docker volume rm || true
-            
-            # Clean up docker system
-            docker system prune -a -f --volumes || true
-          fi
-          
-          echo "Removing old build artifacts and deployments..."
-          find ~/deployments -maxdepth 1 -type d -name 'clearway-*' | sort -r | tail -n +2 | xargs rm -rf || true
-          
-          echo "Removing temporary and cache files..."
-          find /tmp -type d -name "npm-*" -exec rm -rf {} + 2>/dev/null || true
-          find /tmp -name "*.tmp" -delete 2>/dev/null || true
-          find ~/.npm -type d -name "_cacache" -exec rm -rf {} + 2>/dev/null || true
-          
-          echo "Removing old log files..."
-          find ~/ -type f -name "*.log" -mtime +7 -delete 2>/dev/null || true
-          
-          echo "Cleaning apt cache if possible..."
-          if command -v apt-get &>/dev/null; then
-            sudo apt-get clean || true
-            sudo apt-get autoremove -y || true
-          fi
-          
-          echo "After cleanup disk space usage:"
-          df -h
+          python -m pip install --upgrade pip
+          pip install ansible
+      
+      - name: Create Ansible inventory
+        run: |
+          cat > ansible/inventory.ini << EOF
+          [production]
+          app ansible_host=${{ secrets.VM_IP }} ansible_user=${{ secrets.VM_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa
           EOF
-
-      - name: Install Docker on VM
+      
+      # Create extra vars file
+      - name: Prepare Ansible extra vars
         run: |
-          echo "Installing Docker on VM..."
-          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
-          set -e
+          cat > ansible/extra_vars.yml << EOF
+          ---
+          $(cat ansible-vars/version.yml)
           
-          # Check if Docker is already installed
-          if ! command -v docker &>/dev/null; then
-            echo "Installing Docker..."
+          # Additional deployment variables
+          app_name: clearway
+          app_domain: ${{ secrets.APP_DOMAIN || 'localhost' }}
+          EOF
+      
+      # Run Disk cleanup as a preparatory step
+      - name: Run Disk Cleanup on VM
+        run: |
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+            set -e
             
-            # Add Docker's official GPG key
-            if [ -f /etc/debian_version ]; then
-              # Debian/Ubuntu
-              sudo apt-get update
-              sudo apt-get install -y ca-certificates curl gnupg
-              sudo install -m 0755 -d /etc/apt/keyrings
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-              sudo chmod a+r /etc/apt/keyrings/docker.gpg
+            echo "Current disk space usage:"
+            df -h
+            
+            # Clean Docker resources
+            if command -v docker &>/dev/null; then
+              echo "Cleaning unused Docker resources..."
+              docker system prune -af --volumes || true
               
-              # Add Docker repository
-              echo \
-                "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-                "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-              
-              sudo apt-get update
-              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-            elif [ -f /etc/redhat-release ]; then
-              # RHEL/CentOS/Fedora
-              sudo dnf install -y dnf-plugins-core
-              sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-              sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-            else
-              # Try with apt as fallback
-              sudo apt-get update
-              sudo apt-get install -y docker.io docker-compose
+              # Keep only last 3 versions of each image
+              for image in $(docker images --format "{{.Repository}}" | sort | uniq); do
+                if [[ "$image" == *"clearway"* ]]; then
+                  image_count=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "$image" | wc -l)
+                  if [ "$image_count" -gt 3 ]; then
+                    echo "Cleaning old versions of $image..."
+                    docker images --format "{{.Repository}}:{{.Tag}} {{.CreatedAt}}" | grep "$image" | sort -k2 | head -n -3 | awk '{print $1}' | xargs -r docker rmi || true
+                  fi
+                fi
+              done
             fi
             
-            # Start and enable Docker service
-            sudo systemctl start docker
-            sudo systemctl enable docker
+            # Clean old log files
+            echo "Cleaning old log files..."
+            find /var/log -type f -name "*.log.*" -mtime +7 -delete 2>/dev/null || true
+            find /var/log -type f -name "*.gz" -mtime +7 -delete 2>/dev/null || true
             
-            # Add current user to docker group
-            sudo usermod -aG docker $USER
-          else
-            echo "Docker is already installed"
-          fi
-          
-          # Check Docker version
-          docker --version
-          
-          # Install docker-compose if not available
-          if ! command -v docker-compose &>/dev/null; then
-            echo "Installing docker-compose..."
-            
-            # Check if docker compose plugin is available
-            if command -v docker compose &>/dev/null; then
-              echo "Docker Compose plugin is available, creating alias"
-              echo 'alias docker-compose="docker compose"' >> ~/.bashrc
-            else
-              # Install standalone docker-compose
-              sudo curl -L "https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
+            # Clean package manager cache
+            if command -v apt-get &>/dev/null; then
+              echo "Cleaning apt cache..."
+              sudo apt-get clean || true
+              sudo apt-get autoremove -y || true
+            elif command -v dnf &>/dev/null; then
+              echo "Cleaning dnf cache..."
+              sudo dnf clean all || true
             fi
-          fi
-          
-          # Check docker-compose version
-          docker-compose version || docker compose version || echo "Docker compose not found"
-          
-          echo "Docker installation completed successfully!"
+            
+            echo "After cleanup disk space usage:"
+            df -h
           EOF
-
-      - name: Transfer deployment files to VM
+          
+      # Ensure Docker login on VM
+      - name: Set up Docker on VM
         run: |
-          echo "Transferring deployment files to VM..."
-          
-          # Create deployment directory with timestamp
-          DEPLOY_DIR="clearway-$(date +%Y%m%d%H%M%S)"
-          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} "mkdir -p ~/deployments/${DEPLOY_DIR}"
-          
-          # Copy deployment files
-          scp -r deployment/* ${{ secrets.VM_USER }}@${{ secrets.VM_IP }}:~/deployments/${DEPLOY_DIR}/
-          
-          echo "Files transferred successfully to ~/deployments/${DEPLOY_DIR}/"
-
-      - name: Deploy with Docker
-        run: |
-          echo "Deploying with Docker..."
           ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << EOF
-          set -e
-          
-          # Navigate to latest deployment directory
-          cd ~/deployments/\$(ls -t ~/deployments | head -1)
-          
-          # Create data directory for backend if it doesn't exist
-          mkdir -p backend/data
-          
-          # Stop any existing containers
-          docker-compose down || true
-          
-          # Pull latest images
-          docker-compose pull || true
-          
-          # Build and start containers
-          docker-compose up --build -d
-          
-          # Check status
-          docker-compose ps
-          
-          # Create systemd service for auto-restart
-          mkdir -p ~/.config/systemd/user/
-          
-          # Create simple systemd service for Docker Compose
-          cat > ~/.config/systemd/user/clearway-docker.service << 'EOL'
-          [Unit]
-          Description=ClearWay Docker Compose Application
-          Requires=docker.service
-          After=docker.service
-          
-          [Service]
-          Type=oneshot
-          RemainAfterExit=yes
-          WorkingDirectory=~/deployments/\$(ls -t ~/deployments | head -1)
-          ExecStart=/usr/bin/docker-compose up -d
-          ExecStop=/usr/bin/docker-compose down
-          
-          [Install]
-          WantedBy=default.target
-          EOL
-          
-          # Enable and start the service
-          systemctl --user daemon-reload
-          systemctl --user enable clearway-docker.service
-          systemctl --user start clearway-docker.service
-          
-          echo "Deployment completed successfully!"
+            # Login to DockerHub on the VM
+            echo "Logging in to DockerHub..."
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # Check login status
+            if [ $? -eq 0 ]; then
+              echo "Successfully logged in to DockerHub"
+            else
+              echo "Failed to log in to DockerHub"
+              exit 1
+            fi
           EOF
-
-      - name: Verify deployment
+      
+      # Run Ansible playbook
+      - name: Run Ansible playbook
         run: |
-          echo "Verifying deployment..."
-          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << EOF
-          set -e
-          
-          echo "Checking container status..."
-          docker ps
-          
-          echo "Checking systemd service status..."
-          systemctl --user status clearway-docker.service || true
-          
-          echo "Checking logs..."
-          docker logs --tail 20 \$(docker ps --filter name=frontend -q) || true
-          docker logs --tail 20 \$(docker ps --filter name=backend -q) || true
-          
-          echo "Checking if nginx is accessible..."
-          curl -I http://localhost || true
-          
-          echo "Deployment verification completed!"
-          EOF
+          cd ansible
+          ansible-playbook -i inventory.ini site.yml --extra-vars "@extra_vars.yml" -v

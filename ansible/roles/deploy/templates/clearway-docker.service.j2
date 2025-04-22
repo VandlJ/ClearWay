@@ -1,0 +1,16 @@
+[Unit]
+Description=ClearWay Docker Compose Application
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory={{ app_base_dir }}/latest
+ExecStart=/usr/bin/docker-compose up -d
+ExecStop=/usr/bin/docker-compose down
+User={{ deploy_user }}
+Group={{ deploy_user }}
+
+[Install]
+WantedBy=multi-user.target

@@ -184,7 +184,15 @@ jobs:
         run: |
           cat > ansible/extra_vars.yml << EOF
           ---
-          $(cat ansible-vars/version.yml)
+          app_version: "${{ steps.timestamp.outputs.timestamp }}"
+          docker_registry: "docker.io"
+          docker_username: "${{ secrets.DOCKERHUB_USERNAME }}"
+          frontend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:${{ steps.timestamp.outputs.timestamp }}"
+          backend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:${{ steps.timestamp.outputs.timestamp }}"
+          nginx_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:${{ steps.timestamp.outputs.timestamp }}"
+          deployment_timestamp: "$(date)"
+          git_commit: "${{ github.sha }}"
+          git_branch: "${{ github.ref_name }}"
           
           # Additional deployment variables
           app_name: clearway

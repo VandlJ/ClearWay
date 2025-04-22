@@ -68,12 +68,26 @@
   ansible.builtin.debug:
     var: cleanup_result.stdout_lines
 
-- name: Ensure Docker is installed
-  ansible.builtin.package:
-    name: 
-      - docker.io
-      - python3-docker
-    state: present
+- name: Check if Docker is installed
+  ansible.builtin.command: which docker
+  register: docker_check
+  ignore_errors: yes
+  changed_when: false
+  become: yes
+
+- name: Install Docker using official script (if not installed)
+  ansible.builtin.shell: |
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+    rm get-docker.sh
+    usermod -aG docker {{ deploy_user }}
+  become: yes
+  when: docker_check.rc != 0
+
+- name: Install Python Docker module
+  ansible.builtin.pip:
+    name: docker
+    state: latest
   become: yes
 
 - name: Ensure Docker service is running

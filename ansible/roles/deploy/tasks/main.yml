@@ -129,7 +129,7 @@
   become: yes
 
 - name: Stop existing Docker Compose services
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: "{{ app_base_dir }}/latest"
     state: absent
     remove_images: local
@@ -139,7 +139,7 @@
   when: app_base_dir + '/latest' is directory
 
 - name: Start Docker Compose services
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: "{{ new_deployment_dir.path }}"
     state: present
   become: yes

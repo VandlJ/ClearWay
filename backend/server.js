@@ -6,6 +6,7 @@ const cors = require("cors");
 const multer = require("multer");
 const { preprocessingDir, getDatasetPath } = require("./config/paths");
 const { exec } = require("child_process");
+const { parseTime } = require("./utils/time-utils");
 
 const app = express();
 const PORT = 8000;
@@ -40,14 +41,6 @@ function parseCSVFile(filePath) {
         reject(error);
       });
   });
-}
-
-// Helper function to parse "HH:MM:SS" into a Date object
-function parseTime(timeStr) {
-  const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-  const date = new Date();
-  date.setHours(hours, minutes, seconds, 0);
-  return date;
 }
 
 function parseCSVFileReduced(filePath) {

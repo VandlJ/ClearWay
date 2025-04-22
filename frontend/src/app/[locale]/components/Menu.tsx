@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Popup from "./Popup";
 import { useTranslations } from "next-intl";
+import Image from 'next/image';
 
 interface Option {
   name: string;
@@ -30,7 +31,7 @@ export default function Menu() {
           { name: t("tile1.option3"), width: 240 },
           { name: t("tile1.option4"), width: 250 }
         ])} className="bg-white shadow-md rounded-lg p-6 text-center hover:bg-gray-200 w-80 h-72 transform transition-transform duration-400 hover:-translate-y-2 hover:shadow-lg">
-          <img src="/icons/firetruck.png" alt="Hasiči" className="mx-auto mb-4 w-20 h-20" />
+          <Image src="/icons/firetruck.png" alt="Hasiči" width={80} height={80} className="mx-auto mb-4" />
           <h2 className="text-3xl font-semibold text-black">
             {t("tile1.title")}
           </h2>
@@ -41,7 +42,7 @@ export default function Menu() {
           { name: t("tile2.option3"), width: 240 },
           { name: t("tile2.option4"), width: 190 }
         ])} className="bg-white shadow-md rounded-lg p-6 text-center hover:bg-gray-200 w-80 h-72 transform transition-transform duration-400 hover:-translate-y-2 hover:shadow-lg">
-          <img src="/icons/ambulance.png" alt="Záchranná služba" className="mx-auto mb-4 w-20 h-20" />
+          <Image src="/icons/ambulance.png" alt="Záchranná služba" width={80} height={80} className="mx-auto mb-4" />
           <h2 className="text-3xl font-semibold text-black">
             {t("tile2.title")}
           </h2>
@@ -52,7 +53,7 @@ export default function Menu() {
           { name: t("tile3.option3"), width: 220 },
           { name: t("tile3.option4"), width: 250 }
         ])} className="bg-white shadow-md rounded-lg p-6 text-center hover:bg-gray-200 w-80 h-72 transform transition-transform duration-400 hover:-translate-y-2 hover:shadow-lg">
-          <img src="/icons/police-car.png" alt="Policie" className="mx-auto mb-4 w-20 h-20" />
+          <Image src="/icons/police-car.png" alt="Policie" width={80} height={80} className="mx-auto mb-4" />
           <h2 className="text-3xl font-semibold text-black">
             {t("tile3.title")}
           </h2>

@@ -1,0 +1,7 @@
+---
+# Default variables for the common role
+nodejs_version: "20.x"
+create_deploy_user: true
+deploy_user: "deploy"
+deploy_user_home: "/home/{{ deploy_user }}"
+app_name: "clearway"

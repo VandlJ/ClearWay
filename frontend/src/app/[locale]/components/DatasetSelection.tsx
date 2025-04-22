@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 export default function DatasetSelection() {
   const t = useTranslations("pages.map.sidePanel.dataset");
-  const { selectedDataset, setSelectedDataset, options, refreshOptions } = useDataset();
+  const { selectedDataset, setSelectedDataset, options } = useDataset();
 
   return (
     <div className="mt-4 border border-gray-4000 w-full p-4 rounded-lg bg-white shadow-lg">

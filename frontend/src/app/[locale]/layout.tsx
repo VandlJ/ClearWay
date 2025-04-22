@@ -5,8 +5,8 @@ import { ReactQueryProvider } from "@/app/providers/ReactQueryProvider";
 import { DatasetProvider } from "@/app/providers/DatasetContextProvider";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
+import { Locale, locales } from "@/i18n/config";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -22,24 +22,28 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
   params,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-  params: { locale: string };
-}>) {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as any)) {
+  // Ensure the locale is one of the supported locales
+  if (!locales.includes(locale as Locale)) {
     notFound();
   }
 
+  // Type assertion to ensure locale is treated as a valid locale type
+  const validLocale = locale as Locale;
+  
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html lang={validLocale}>
       <body
         className={`${poppins.variable} antialiased min-h-screen bg-gradient-to-br from-gray-100 to-gray-200`}
       >
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider locale={validLocale} messages={messages}>
           <ReactQueryProvider>
             <DatasetProvider>
               {children}

@@ -40,12 +40,12 @@
       docker system prune -af --volumes
       
       # Keep only the last 3 versions of each image
-      for image in $(docker images --format "{{.Repository}}" | sort | uniq); do
+      for image in $(docker images --format {% raw %}"{{.Repository}}"{% endraw %} | sort | uniq); do
         if [[ "$image" == *"clearway"* ]]; then
-          image_count=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "$image" | wc -l)
+          image_count=$(docker images --format {% raw %}"{{.Repository}}:{{.Tag}}"{% endraw %} | grep "$image" | wc -l)
           if [ "$image_count" -gt 3 ]; then
             echo "Cleaning old versions of $image..."
-            docker images --format "{{.Repository}}:{{.Tag}} {{.CreatedAt}}" | grep "$image" | sort -k2 | head -n -3 | awk '{print $1}' | xargs -r docker rmi || true
+            docker images --format {% raw %}"{{.Repository}}:{{.Tag}} {{.CreatedAt}}"{% endraw %} | grep "$image" | sort -k2 | head -n -3 | awk '{print $1}' | xargs -r docker rmi || true
           fi
         fi
       done

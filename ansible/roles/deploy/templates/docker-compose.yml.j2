@@ -15,7 +15,7 @@ services:
     container_name: clearway-backend
     restart: unless-stopped
     volumes:
-      - {{ new_deployment_dir.path }}/data:/app/data
+      - "{{ new_deployment_dir.path }}/data:/app/data"
     networks:
       - app-network
 

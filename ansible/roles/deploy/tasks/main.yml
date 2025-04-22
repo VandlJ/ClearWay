@@ -142,6 +142,12 @@
     mode: '0755'
   become: yes
 
+- name: Check if latest symlink exists
+  ansible.builtin.stat:
+    path: "{{ app_base_dir }}/latest"
+  register: latest_symlink
+  become: yes
+
 - name: Stop existing Docker Compose services
   community.docker.docker_compose_v2:
     project_src: "{{ app_base_dir }}/latest"
@@ -150,7 +156,7 @@
   ignore_errors: yes
   become: yes
   become_user: "{{ deploy_user }}"
-  when: app_base_dir + '/latest' is directory
+  when: latest_symlink.stat.exists
 
 - name: Start Docker Compose services
   community.docker.docker_compose_v2:

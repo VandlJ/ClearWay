@@ -551,6 +551,25 @@ jobs:
           # Check podman version
           podman --version
           
+          # Install pip3 if not available
+          if ! command -v pip3 &>/dev/null; then
+            echo "Installing pip3..."
+            if [ -f /etc/debian_version ]; then
+              # Debian/Ubuntu
+              sudo apt-get update
+              sudo apt-get install -y python3-pip
+            elif [ -f /etc/redhat-release ]; then
+              # RHEL/CentOS/Fedora
+              sudo dnf install -y python3-pip
+            else
+              # Try with apt as fallback
+              sudo apt-get update
+              sudo apt-get install -y python3-pip
+            fi
+          else
+            echo "pip3 is already installed"
+          fi
+          
           # Install podman-compose
           if ! command -v podman-compose &>/dev/null; then
             echo "Installing podman-compose..."

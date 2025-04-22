@@ -478,6 +478,15 @@ jobs:
           echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
+          
+          # Test SSH connection
+          echo "Testing SSH connection..."
+          if ! ssh -o StrictHostKeyChecking=no -o BatchMode=yes ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} "echo SSH connection successful"; then
+            echo "Error: Cannot connect to the server via SSH. Please ensure your VM_SSH_PRIVATE_KEY secret is correct and the key is already added to the VM's authorized_keys file."
+            echo "You can add your public key to authorized_keys with the following command:"
+            echo "cat ~/.ssh/id_rsa.pub | ssh user@vm-ip \"mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && cat >> ~/.ssh/authorized_keys\""
+            exit 1
+          fi
       
       - name: Emergency disk space cleanup
         run: |

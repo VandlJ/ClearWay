@@ -75,32 +75,34 @@ jobs:
       # Create docker-compose.yml on the VM
       - name: Create docker-compose.yml on VM
         run: |
-          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << EOF
-            cat > ~/clearway/docker-compose.yml << 'EOL'
-            services:
-              frontend:
-                image: ${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:latest
-                container_name: clearway-frontend
-                restart: unless-stopped
-                ports:
-                  - "3000:3000"
-                depends_on:
-                  - backend
+          cat > docker-compose.yml << EOF
+          version: '3'
 
-              backend:
-                image: ${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:latest
-                container_name: clearway-backend
-                restart: unless-stopped
-                ports:
-                  - "8080:8080"
-                volumes:
-                  - ./data:/app/data
+          services:
+            frontend:
+              image: ${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:latest
+              container_name: clearway-frontend
+              restart: unless-stopped
+              ports:
+                - "3000:3000"
+              depends_on:
+                - backend
 
-            networks:
-              default:
-                name: clearway_network
-            EOL
+            backend:
+              image: ${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:latest
+              container_name: clearway-backend
+              restart: unless-stopped
+              ports:
+                - "8080:8080"
+              volumes:
+                - ./data:/app/data
+
+          networks:
+            default:
+              name: clearway_network
           EOF
+          
+          scp docker-compose.yml ${{ secrets.VM_USER }}@${{ secrets.VM_IP }}:~/clearway/
       
       # Login to DockerHub on VM and deploy
       - name: Deploy to VM

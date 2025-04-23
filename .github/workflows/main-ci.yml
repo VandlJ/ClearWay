@@ -1,11 +1,4 @@
-name: Production CI Pipeline # Clearway
-# This GitHub Actions workflow is designed to automate the CI/CD pipeline for the Clearway application.
-# It includes steps for testing, building Docker images, and deploying to a remote server using Ansible.
-# The pipeline is triggered on pushes and pull requests to the main branch.
-# The workflow consists of three main jobs:
-# 1. **tests**: Runs unit tests for both frontend and backend applications.
-# 2. **build-and-push**: Builds Docker images for the frontend, backend, and Nginx, and pushes them to DockerHub.
-# 3. **deploy-with-ansible**: Deploys the application to a remote server using Ansible, including a disk cleanup step.
+name: ClearWay CI/CD Pipeline
 
 on:
   push:
@@ -14,61 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  tests:
-    name: Test Application
+  build-and-deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      # Frontend testing
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
-        continue-on-error: true  # Continue even if npm install fails
-      
-      - name: Lint check
-        working-directory: ./frontend
-        run: npm run lint
-        continue-on-error: true  # Continue even if linting fails
-      
-      # Run frontend tests
-      - name: Run frontend tests
-        working-directory: ./frontend
-        run: npm test
-        continue-on-error: true  # Continue even if tests fail
-      
-      # Backend testing
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm ci
-        continue-on-error: true  # Continue even if npm install fails
-      
-      # Run backend tests
-      - name: Run backend tests
-        working-directory: ./backend
-        run: npm test
-        continue-on-error: true  # Continue even if tests fail
-        
-      - name: Generate test summary
-        run: |
-          echo "== CI/CD Pipeline Test Summary =="
-          echo "Note: This pipeline is set to continue on errors to provide maximum feedback."
-          echo "Check individual step logs for detailed error information."
-        if: always()  # Always run this step
-
-  build-and-push:
-    name: Build and Push Docker Images
-    needs: tests
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only build and push on main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
       - name: Checkout code
@@ -81,7 +23,6 @@ jobs:
         id: timestamp
         run: echo "timestamp=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
       
-      # Login to DockerHub
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
@@ -96,10 +37,7 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:${{ steps.timestamp.outputs.timestamp }}
             ${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:latest
-          cache-to: type=inline
       
       # Build and push backend image
       - name: Build and push backend image
@@ -109,64 +47,9 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:${{ steps.timestamp.outputs.timestamp }}
             ${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:latest
-          cache-to: type=inline
       
-      # Build and push nginx image
-      - name: Build and push nginx image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./nginx-reverse-proxy
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:${{ steps.timestamp.outputs.timestamp }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:latest
-          cache-to: type=inline
-      
-      # Save deployment version information
-      - name: Create deployment version file
-        run: |
-          mkdir -p ansible-vars
-          cat > ansible-vars/version.yml << EOF
-          ---
-          app_version: "${{ steps.timestamp.outputs.timestamp }}"
-          docker_registry: "docker.io"
-          docker_username: "${{ secrets.DOCKERHUB_USERNAME }}"
-          frontend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:${{ steps.timestamp.outputs.timestamp }}"
-          backend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:${{ steps.timestamp.outputs.timestamp }}"
-          nginx_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:${{ steps.timestamp.outputs.timestamp }}"
-          deployment_timestamp: "$(date)"
-          git_commit: "${{ github.sha }}"
-          git_branch: "${{ github.ref_name }}"
-          EOF
-      
-      # Upload Ansible variables
-      - name: Upload Ansible variables
-        uses: actions/upload-artifact@v4
-        with:
-          name: ansible-vars
-          path: ansible-vars
-          retention-days: 7
-
-  deploy-with-ansible:
-    name: Deploy with Ansible
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only deploy on main branch
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Download Ansible variables
-        uses: actions/download-artifact@v4
-        with:
-          name: ansible-vars
-          path: ansible-vars
-      
+      # Setup SSH for deployment
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
@@ -174,112 +57,68 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
       
-      - name: Install Ansible
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible
-      
-      - name: Create Ansible inventory
-        run: |
-          cat > ansible/inventory.ini << EOF
-          [clearway_server]
-          app ansible_host=${{ secrets.VM_IP }} ansible_user=${{ secrets.VM_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa
-          EOF
-      
-      # Create extra vars file
-      - name: Prepare Ansible extra vars
-        run: |
-          # Ensure timestamp is defined
-          TIMESTAMP="${{ steps.timestamp.outputs.timestamp }}"
-          if [ -z "$TIMESTAMP" ]; then
-            TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          fi
-          
-          cat > ansible/extra_vars.yml << EOF
-          ---
-          app_version: "$TIMESTAMP"
-          docker_registry: "docker.io"
-          docker_username: "${{ secrets.DOCKERHUB_USERNAME }}"
-          frontend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:$TIMESTAMP"
-          backend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:$TIMESTAMP"
-          nginx_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:$TIMESTAMP"
-          deployment_timestamp: "$(date)"
-          git_commit: "${{ github.sha }}"
-          git_branch: "${{ github.ref_name }}"
-          
-          # Additional deployment variables
-          app_name: clearway
-          app_domain: ${{ secrets.APP_DOMAIN || 'localhost' }}
-          
-          # Required system variables
-          deploy_user: "${{ secrets.VM_USER }}"
-          app_base_dir: "/home/${{ secrets.VM_USER }}/deployments"
-          EOF
-      
-      # Run Disk cleanup as a preparatory step
-      - name: Run Disk Cleanup on VM
+      # Clean up and prepare for deployment
+      - name: Clean up disk space on VM
         run: |
           ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
-            set -e
+            # Stop and remove existing containers to avoid conflicts
+            docker compose down || true
+            docker rm -f clearway-frontend clearway-backend || true
             
-            echo "Current disk space usage:"
-            df -h
+            # Clean up docker system
+            docker system prune -af --volumes || true
             
-            # Clean Docker resources
-            if command -v docker &>/dev/null; then
-              echo "Cleaning unused Docker resources..."
-              docker system prune -af --volumes || true
-              
-              # Keep only last 3 versions of each image
-              for image in $(docker images --format "{{.Repository}}" | sort | uniq); do
-                if [[ "$image" == *"clearway"* ]]; then
-                  image_count=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "$image" | wc -l)
-                  if [ "$image_count" -gt 3 ]; then
-                    echo "Cleaning old versions of $image..."
-                    docker images --format "{{.Repository}}:{{.Tag}} {{.CreatedAt}}" | grep "$image" | sort -k2 | head -n -3 | awk '{print $1}' | xargs -r docker rmi || true
-                  fi
-                fi
-              done
-            fi
-            
-            # Clean old log files
-            echo "Cleaning old log files..."
-            find /var/log -type f -name "*.log.*" -mtime +7 -delete 2>/dev/null || true
-            find /var/log -type f -name "*.gz" -mtime +7 -delete 2>/dev/null || true
-            
-            # Clean package manager cache
-            if command -v apt-get &>/dev/null; then
-              echo "Cleaning apt cache..."
-              sudo apt-get clean || true
-              sudo apt-get autoremove -y || true
-            elif command -v dnf &>/dev/null; then
-              echo "Cleaning dnf cache..."
-              sudo dnf clean all || true
-            fi
-            
-            echo "After cleanup disk space usage:"
-            df -h
-          EOF
-          
-      # Ensure Docker login on VM
-      - name: Set up Docker on VM
-        run: |
-          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << EOF
-            # Login to DockerHub on the VM
-            echo "Logging in to DockerHub..."
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-            
-            # Check login status
-            if [ $? -eq 0 ]; then
-              echo "Successfully logged in to DockerHub"
-            else
-              echo "Failed to log in to DockerHub"
-              exit 1
-            fi
+            # Create deployment directory if it doesn't exist
+            mkdir -p ~/clearway
           EOF
       
-      # Run Ansible playbook
-      - name: Run Ansible playbook
+      # Create docker-compose.yml on the VM
+      - name: Create docker-compose.yml on VM
         run: |
-          cd ansible
-          ansible-playbook -i inventory.ini site.yml --extra-vars "@extra_vars.yml" -v
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << EOF
+            cat > ~/clearway/docker-compose.yml << 'EOL'
+            services:
+              frontend:
+                image: ${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:latest
+                container_name: clearway-frontend
+                restart: unless-stopped
+                ports:
+                  - "3000:3000"
+                depends_on:
+                  - backend
+
+              backend:
+                image: ${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:latest
+                container_name: clearway-backend
+                restart: unless-stopped
+                ports:
+                  - "8080:8080"
+                volumes:
+                  - ./data:/app/data
+
+            networks:
+              default:
+                name: clearway_network
+            EOL
+          EOF
+      
+      # Login to DockerHub on VM and deploy
+      - name: Deploy to VM
+        run: |
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << EOF
+            # Login to DockerHub
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # Navigate to deployment directory
+            cd ~/clearway
+            
+            # Pull latest images
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:latest
+            
+            # Start services
+            docker compose up -d
+            
+            # Verify deployment
+            docker ps
+          EOF

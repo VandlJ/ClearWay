@@ -182,14 +182,20 @@ jobs:
       # Create extra vars file
       - name: Prepare Ansible extra vars
         run: |
+          # Ensure timestamp is defined
+          TIMESTAMP="${{ steps.timestamp.outputs.timestamp }}"
+          if [ -z "$TIMESTAMP" ]; then
+            TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          fi
+          
           cat > ansible/extra_vars.yml << EOF
           ---
-          app_version: "${{ steps.timestamp.outputs.timestamp }}"
+          app_version: "$TIMESTAMP"
           docker_registry: "docker.io"
           docker_username: "${{ secrets.DOCKERHUB_USERNAME }}"
-          frontend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:${{ steps.timestamp.outputs.timestamp }}"
-          backend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:${{ steps.timestamp.outputs.timestamp }}"
-          nginx_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:${{ steps.timestamp.outputs.timestamp }}"
+          frontend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-frontend:$TIMESTAMP"
+          backend_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-backend:$TIMESTAMP"
+          nginx_image: "${{ secrets.DOCKERHUB_USERNAME }}/clearway-nginx:$TIMESTAMP"
           deployment_timestamp: "$(date)"
           git_commit: "${{ github.sha }}"
           git_branch: "${{ github.ref_name }}"

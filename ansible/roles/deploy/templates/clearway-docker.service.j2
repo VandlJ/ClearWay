@@ -7,8 +7,9 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory={{ app_base_dir }}/latest
-ExecStart=/usr/bin/docker-compose up -d
-ExecStop=/usr/bin/docker-compose down
+# Use docker compose command (V2) instead of docker-compose
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose down
 User={{ deploy_user }}
 Group={{ deploy_user }}
 

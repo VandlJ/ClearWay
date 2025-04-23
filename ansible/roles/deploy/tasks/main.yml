@@ -151,7 +151,11 @@
     verbosity: 0
 
 - name: Pull frontend Docker image
-  ansible.builtin.shell: docker pull {{ frontend_image }}
+  ansible.builtin.shell: |
+    if ! docker pull {{ frontend_image }}; then
+      echo "Failed to pull {{ frontend_image }}, trying latest tag instead..."
+      docker pull {{ frontend_image | regex_replace(':[^:]*$', ':latest') }}
+    fi
   register: frontend_pull
   become: yes
   become_user: "{{ deploy_user }}"
@@ -162,7 +166,11 @@
     verbosity: 0
 
 - name: Pull backend Docker image
-  ansible.builtin.shell: docker pull {{ backend_image }}
+  ansible.builtin.shell: |
+    if ! docker pull {{ backend_image }}; then
+      echo "Failed to pull {{ backend_image }}, trying latest tag instead..."
+      docker pull {{ backend_image | regex_replace(':[^:]*$', ':latest') }}
+    fi
   register: backend_pull
   become: yes
   become_user: "{{ deploy_user }}"
@@ -173,7 +181,11 @@
     verbosity: 0
 
 - name: Pull nginx Docker image
-  ansible.builtin.shell: docker pull {{ nginx_image }}
+  ansible.builtin.shell: |
+    if ! docker pull {{ nginx_image }}; then
+      echo "Failed to pull {{ nginx_image }}, trying latest tag instead..."
+      docker pull {{ nginx_image | regex_replace(':[^:]*$', ':latest') }}
+    fi
   register: nginx_pull
   become: yes
   become_user: "{{ deploy_user }}"
@@ -181,6 +193,21 @@
 - name: Display nginx pull result
   ansible.builtin.debug:
     var: nginx_pull.stdout_lines
+    verbosity: 0
+
+- name: Update image variables based on pull results
+  ansible.builtin.set_fact:
+    frontend_image_actual: "{{ frontend_image if 'Failed to pull' not in frontend_pull.stdout else frontend_image | regex_replace(':[^:]*$', ':latest') }}"
+    backend_image_actual: "{{ backend_image if 'Failed to pull' not in backend_pull.stdout else backend_image | regex_replace(':[^:]*$', ':latest') }}"
+    nginx_image_actual: "{{ nginx_image if 'Failed to pull' not in nginx_pull.stdout else nginx_image | regex_replace(':[^:]*$', ':latest') }}"
+
+- name: Show actual images being used
+  ansible.builtin.debug:
+    msg: 
+      - "Using the following Docker images for deployment:"
+      - "Frontend: {{ frontend_image_actual }}"
+      - "Backend: {{ backend_image_actual }}"
+      - "Nginx: {{ nginx_image_actual }}"
     verbosity: 0
 
 - name: Verify Docker images were successfully pulled

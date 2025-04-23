@@ -117,6 +117,83 @@
   become: yes
   become_user: "{{ deploy_user }}"
 
+- name: Check Docker login status
+  ansible.builtin.shell: docker info | grep "Username"
+  register: docker_login_check
+  ignore_errors: yes
+  changed_when: false
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Display Docker login status
+  ansible.builtin.debug:
+    var: docker_login_check.stdout_lines
+    verbosity: 0
+
+- name: Show images to be pulled
+  ansible.builtin.debug:
+    msg: 
+      - "Preparing to pull the following Docker images:"
+      - "Frontend: {{ frontend_image }}"
+      - "Backend: {{ backend_image }}"
+      - "Nginx: {{ nginx_image }}"
+    verbosity: 0
+
+- name: Check available disk space before pulling images
+  ansible.builtin.shell: df -h
+  register: disk_before_pull
+  changed_when: false
+  become: yes
+
+- name: Display disk space before pulling
+  ansible.builtin.debug:
+    var: disk_before_pull.stdout_lines
+    verbosity: 0
+
+- name: Pull frontend Docker image
+  ansible.builtin.shell: docker pull {{ frontend_image }}
+  register: frontend_pull
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Display frontend pull result
+  ansible.builtin.debug:
+    var: frontend_pull.stdout_lines
+    verbosity: 0
+
+- name: Pull backend Docker image
+  ansible.builtin.shell: docker pull {{ backend_image }}
+  register: backend_pull
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Display backend pull result
+  ansible.builtin.debug:
+    var: backend_pull.stdout_lines
+    verbosity: 0
+
+- name: Pull nginx Docker image
+  ansible.builtin.shell: docker pull {{ nginx_image }}
+  register: nginx_pull
+  become: yes
+  become_user: "{{ deploy_user }}"
+
+- name: Display nginx pull result
+  ansible.builtin.debug:
+    var: nginx_pull.stdout_lines
+    verbosity: 0
+
+- name: Verify Docker images were successfully pulled
+  ansible.builtin.shell: docker images | grep {{ item | regex_replace('.*:', '') }}
+  register: image_check
+  become: yes
+  become_user: "{{ deploy_user }}"
+  with_items:
+    - "{{ frontend_image }}"
+    - "{{ backend_image }}"
+    - "{{ nginx_image }}"
+  changed_when: false
+
 - name: Create docker-compose.yml file
   ansible.builtin.template:
     src: docker-compose.yml.j2
@@ -125,18 +202,6 @@
     group: "{{ deploy_user }}"
     mode: '0644'
   become: yes
-
-- name: Pull Docker images
-  community.docker.docker_image:
-    name: "{{ item }}"
-    source: pull
-    force_source: yes
-  become: yes
-  become_user: "{{ deploy_user }}"
-  with_items:
-    - "{{ frontend_image }}"
-    - "{{ backend_image }}"
-    - "{{ nginx_image }}"
 
 - name: Create data directory for backend
   ansible.builtin.file:

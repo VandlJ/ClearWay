@@ -1,4 +1,11 @@
-name: Production CI Pipeline
+name: Production CI Pipeline # Clearway
+# This GitHub Actions workflow is designed to automate the CI/CD pipeline for the Clearway application.
+# It includes steps for testing, building Docker images, and deploying to a remote server using Ansible.
+# The pipeline is triggered on pushes and pull requests to the main branch.
+# The workflow consists of three main jobs:
+# 1. **tests**: Runs unit tests for both frontend and backend applications.
+# 2. **build-and-push**: Builds Docker images for the frontend, backend, and Nginx, and pushes them to DockerHub.
+# 3. **deploy-with-ansible**: Deploys the application to a remote server using Ansible, including a disk cleanup step.
 
 on:
   push:

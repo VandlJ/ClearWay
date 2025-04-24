@@ -62,24 +62,6 @@ jobs:
       # Apply Terraform
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        
-      # # Extract VM IP address - Fixed command to properly parse output
-      # - name: Extract VM IP Address
-      #   id: extract_vm_ip
-      #   run: |
-      #     # Store terraform output in a file first
-      #     terraform output -raw vm_ip > vm_ip.txt
-      #     VM_IP=$(cat vm_ip.txt)
-      #     echo "vm_ip=$VM_IP" >> $GITHUB_OUTPUT
-      #     echo "New VM provisioned with IP: $VM_IP"
-          
-      # # Update GitHub Secret for VM_IP
-      # - name: Update VM_IP Secret
-      #   uses: gliech/create-github-secret-action@v1
-      #   with:
-      #     name: 'VM_IP'
-      #     value: ${{ steps.extract_vm_ip.outputs.vm_ip }}
-      #     pa_token: ${{ secrets.REPO_ACCESS_TOKEN }}
 
   build-and-deploy:
     name: Build and Deploy
@@ -132,6 +114,52 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
       
+      # Install Docker and Docker Compose on VM
+      - name: Install Docker on VM
+        run: |
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+            # Update package lists
+            sudo apt-get update
+            
+            # Install prerequisites
+            sudo apt-get install -y \
+              apt-transport-https \
+              ca-certificates \
+              curl \
+              gnupg \
+              lsb-release
+            
+            # Add Docker's official GPG key
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            
+            # Set up the stable repository
+            echo \
+              "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+              $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            
+            # Install Docker Engine
+            sudo apt-get update
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+            
+            # Add current user to the docker group to run docker without sudo
+            sudo usermod -aG docker $USER
+            
+            # Install Docker Compose
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            
+            # Create symlink for docker compose
+            sudo ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+            
+            # Verify installations
+            docker --version
+            docker compose version
+          EOF
+          
+          # Create a new SSH session to apply the new group membership
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} "id"
+      
+
       # Ensure required directories exist on the VM
       - name: Ensure deployment directories exist
         run: |

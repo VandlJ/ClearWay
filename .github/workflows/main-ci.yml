@@ -63,23 +63,23 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
         
-      # Extract VM IP address - Fixed command to properly parse output
-      - name: Extract VM IP Address
-        id: extract_vm_ip
-        run: |
-          # Store terraform output in a file first
-          terraform output -raw vm_ip > vm_ip.txt
-          VM_IP=$(cat vm_ip.txt)
-          echo "vm_ip=$VM_IP" >> $GITHUB_OUTPUT
-          echo "New VM provisioned with IP: $VM_IP"
+      # # Extract VM IP address - Fixed command to properly parse output
+      # - name: Extract VM IP Address
+      #   id: extract_vm_ip
+      #   run: |
+      #     # Store terraform output in a file first
+      #     terraform output -raw vm_ip > vm_ip.txt
+      #     VM_IP=$(cat vm_ip.txt)
+      #     echo "vm_ip=$VM_IP" >> $GITHUB_OUTPUT
+      #     echo "New VM provisioned with IP: $VM_IP"
           
-      # Update GitHub Secret for VM_IP
-      - name: Update VM_IP Secret
-        uses: gliech/create-github-secret-action@v1
-        with:
-          name: 'VM_IP'
-          value: ${{ steps.extract_vm_ip.outputs.vm_ip }}
-          pa_token: ${{ secrets.REPO_ACCESS_TOKEN }}
+      # # Update GitHub Secret for VM_IP
+      # - name: Update VM_IP Secret
+      #   uses: gliech/create-github-secret-action@v1
+      #   with:
+      #     name: 'VM_IP'
+      #     value: ${{ steps.extract_vm_ip.outputs.vm_ip }}
+      #     pa_token: ${{ secrets.REPO_ACCESS_TOKEN }}
 
   build-and-deploy:
     name: Build and Deploy

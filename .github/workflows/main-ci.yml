@@ -40,8 +40,8 @@ jobs:
           one_password = "${{ secrets.ONE_TOKEN }}"
           one_endpoint = "${{ secrets.ONE_ENDPOINT }}"
           vm_ssh_pubkey = "~/.ssh/id_rsa.pub"
-          vm_image_name = "Ubuntu Minimal 22.04"
-          vm_image_url = "https://marketplace.opennebula.io//appliance/9fc4becb-a667-40a0-ba92-b580999150b5/download/0"
+          vm_image_name = "Ubuntu 22.04"
+          vm_image_url = "https://marketplace.opennebula.io//appliance/4562be1a-4c11-4e9e-b60a-85a045f1de05/download/0"
           vm_instance_count = 1
           EOF
           
@@ -131,21 +131,6 @@ jobs:
           echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
-      
-      # Clean up and prepare for deployment
-      - name: Clean up disk space on VM
-        run: |
-          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
-            # Stop and remove existing containers to avoid conflicts
-            docker compose down || true
-            docker rm -f clearway-frontend clearway-backend || true
-            
-            # Clean up docker system
-            docker system prune -af --volumes || true
-            
-            # Create deployment directory if it doesn't exist
-            mkdir -p ~/clearway
-          EOF
       
       # Create docker-compose.yml on the VM
       - name: Create docker-compose.yml on VM

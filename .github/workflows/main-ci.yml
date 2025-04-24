@@ -132,6 +132,23 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VM_IP }} >> ~/.ssh/known_hosts
       
+      # Ensure required directories exist on the VM
+      - name: Ensure deployment directories exist
+        run: |
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} "mkdir -p ~/clearway"
+      
+      # Clean up and prepare for deployment
+      - name: Clean up disk space on VM
+        run: |
+          ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+            # Stop and remove existing containers to avoid conflicts
+            docker compose down || true
+            docker rm -f clearway-frontend clearway-backend || true
+            
+            # Clean up docker system
+            docker system prune -af --volumes || true
+          EOF
+      
       # Create docker-compose.yml on the VM
       - name: Create docker-compose.yml on VM
         run: |
